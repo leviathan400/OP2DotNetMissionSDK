@@ -55,3 +55,9 @@ For example: cTest.DLL (native) > DotNetInterop.dll > cTest_DotNet.dll
 
 ## Native vs Managed SDK differences
 Triggers work differently compared to the native SDK. All triggers must be registered to the TriggerManager. TriggerManager will execute a C# event when a trigger has fired, passing in the TriggerStub that was returned when the trigger was created. This stub is how you identify the trigger that has fired.
+
+
+## Links
+
+- [OP2 Scenario Project for C#](https://forum.outpost2.net/index.php/topic,6245.0.html) - Outpost Universe forum thread
+
