@@ -5,6 +5,8 @@
 ## OVERVIEW
 DotNetMissionSDK is a project to move Outpost 2 scenario development from C++ to C#, and finally to JSON where it can be used in an external editor. The DotNetMissionSDK will contain common functionality that will be available through the JSON data file, such as "real AI" and custom triggers.
 
+Forum thread [here](https://forum.outpost2.net/index.php/topic,6245.0.html).
+
 
 ## TECHNICAL OVERVIEW
 DotNetMissionSDK intentionally avoids the use of Windows COM. To do this, the project has to jump through a few hoops. Starting from the unmanaged scenario DLL called by Outpost 2, the DLL calls the managed C++ CLR project DLL, which in turn calls the Managed C# DotNetMissionSDK DLL, which then calls the Outpost 2 interface through the CLR project.
