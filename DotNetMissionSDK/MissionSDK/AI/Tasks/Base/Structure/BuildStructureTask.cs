@@ -15,6 +15,17 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Structure
 	/// </summary>
 	public abstract class BuildStructureTask : Task
 	{
+		// Cross-instance throttle to prevent re-issuing DoBuild to the same convec within a short
+		// window. Multiple goals each instantiate their own BuildStructureTask (per kit type), and
+		// they all find the same convec carrying that kit. Without this throttle, the same convec
+		// receives the same DoBuild command 5+ times per cycle, producing the "Building command
+		// not successful" spam in OP2's comms log and what looks like a memory/state buildup that
+		// crashes OP2 after extended runs. Verified in BotPlayer_*.txt: convec 35 hammered with
+		// Tokamak builds for thousands of ticks before OP2 crashed at ~40 min runtime.
+		private const int BUILD_REISSUE_COOLDOWN_TICKS = 30;
+		private static readonly object s_BuildThrottleLock = new object();
+		private static readonly System.Collections.Generic.Dictionary<int, int> s_LastBuildIssuedTickByConvec = new System.Collections.Generic.Dictionary<int, int>();
+
 		protected map_id m_KitToBuild = map_id.Agridome;
 		protected int m_DesiredDistance = 0;                // Desired minimum distance to nearest structure
 
@@ -23,6 +34,11 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Structure
 
 		private bool m_OverrideLocation = false;
 		private LOCATION m_TargetLocation;
+
+		// Dedupe state-message log spam ("no convec", "convec busy", "no valid tile") —
+		// these are repeated every cycle until the underlying condition changes. Events like
+		// "issuing DoBuild" are NOT deduped because they're real actions, not states.
+		private string m_LastLoggedStateMessage;
 
 		public BuildStructureKitTask buildKitTask				{ get; protected set;	}
 
@@ -88,15 +104,30 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Structure
 
 			if (convec == null)
 			{
-				log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): no convec carrying this kit");
+				LogStateOnce(log, stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): no convec carrying this kit");
 				return new TaskResult(TaskRequirements.None);
 			}
 
 			// Wait for docking or building to complete
 			if (convec.curAction != ActionType.moDone)
 			{
-				log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): convec " + convec.unitID + " busy action=" + convec.curAction);
+				LogStateOnce(log, stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): convec " + convec.unitID + " busy action=" + convec.curAction);
 				return new TaskResult(TaskRequirements.None);
+			}
+
+			// Throttle: silently skip if this convec just got a DoBuild from any BuildStructureTask
+			// instance. A convec can only execute one command at a time, so per-convec throttle is
+			// sufficient and prevents the multi-goal pile-on. Silent skip — no log entry — because
+			// the throttle would otherwise produce its own line-storm.
+			lock (s_BuildThrottleLock)
+			{
+				int lastTick;
+				if (s_LastBuildIssuedTickByConvec.TryGetValue(convec.unitID, out lastTick))
+				{
+					int sinceLast = stateSnapshot.time - lastTick;
+					if (sinceLast >= 0 && sinceLast < BUILD_REISSUE_COOLDOWN_TICKS)
+						return new TaskResult(TaskRequirements.None);
+				}
 			}
 
 			// If we can build earthworkers or have one, we can deploy disconnected structures
@@ -118,7 +149,7 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Structure
 			LOCATION foundPt;
 			if (!Pathfinder.GetClosestValidTile(m_TargetLocation, (x, y) => GetTileCost(stateSnapshot, x, y), (x, y) => IsValidTile(stateSnapshot, x, y), out foundPt))
 			{
-				log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): NO VALID TILE near (" + m_TargetLocation.x + "," + m_TargetLocation.y + ") canDisconnect=" + m_CanBuildDisconnected);
+				LogStateOnce(log, stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): NO VALID TILE near (" + m_TargetLocation.x + "," + m_TargetLocation.y + ") canDisconnect=" + m_CanBuildDisconnected);
 				return new TaskResult(TaskRequirements.None);
 			}
 
@@ -126,11 +157,31 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Structure
 
 			ClearDeployArea(convec, convec.cargoType, foundPt, stateSnapshot, ownerID, unitActions);
 
-			// Build structure
+			// Record issuance BEFORE adding the command so subsequent BuildStructureTask instances
+			// running later in the same async cycle see the cooldown and don't pile on the same convec.
+			lock (s_BuildThrottleLock)
+			{
+				s_LastBuildIssuedTickByConvec[convec.unitID] = stateSnapshot.time;
+			}
+
+			// Build structure — this is an EVENT (not a state), so always log.
+			// Also clear the state-message dedup since we transitioned out of a stuck state.
+			m_LastLoggedStateMessage = null;
 			log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): issuing DoBuild at (" + foundPt.x + "," + foundPt.y + ") convec=" + convec.unitID);
 			unitActions.AddUnitCommand(convec.unitID, 2, () => GameState.GetUnit(convec.unitID)?.DoBuild(m_KitToBuild, foundPt.x, foundPt.y));
 
 			return new TaskResult(TaskRequirements.None);
+		}
+
+		// Log a state message only if it differs from the previous state message logged.
+		// Suppresses noise from per-cycle repetition of "convec busy", "no valid tile", etc.
+		private void LogStateOnce(DotNetMissionSDK.AI.BotLog log, int tick, string message)
+		{
+			if (message != m_LastLoggedStateMessage)
+			{
+				log.Write(tick, message);
+				m_LastLoggedStateMessage = message;
+			}
 		}
 
 		public static void ClearDeployArea(UnitState deployUnit, map_id buildingType, LOCATION deployPt, StateSnapshot stateSnapshot, int ownerID, BotCommands unitActions)

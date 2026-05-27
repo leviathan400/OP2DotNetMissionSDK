@@ -69,14 +69,57 @@ namespace DotNetInterop
 	bool Attach(const char* dllPath, const char* sdkPath)
 	{
 		String^ strDllPath = ToManagedString(dllPath);
-		String^ dotNetPath = ToManagedString(sdkPath);
+		String^ sdkFileName = ToManagedString(sdkPath);
+		String^ missionDir = Path::GetDirectoryName(strDllPath);
 
-		dotNetPath = Path::Combine(Path::GetDirectoryName(strDllPath), dotNetPath);
+		// Resolve SDK DLL path. Look in priority order:
+		//   1. Mission folder        — bundled SDK takes precedence (per-mission override)
+		//   2. OPU folder            — shared SDK install (Model B, the 1.4.2+ convention)
+		//   3. OP2 install root      — legacy/fallback
+		// If none found, default to mission folder path so the load failure has a clear error message.
+		String^ dotNetPath = nullptr;
+
+		// 1. Mission folder
+		String^ tryPath = Path::Combine(missionDir, sdkFileName);
+		if (File::Exists(tryPath))
+			dotNetPath = tryPath;
+
+		// 2. OPU folder (walk up two levels: <missionDir>/maps/<name>/ -> OPU/)
+		if (dotNetPath == nullptr)
+		{
+			String^ mapsDir = Path::GetDirectoryName(missionDir);
+			if (mapsDir != nullptr)
+			{
+				String^ opuDir = Path::GetDirectoryName(mapsDir);
+				if (opuDir != nullptr)
+				{
+					tryPath = Path::Combine(opuDir, sdkFileName);
+					if (File::Exists(tryPath))
+						dotNetPath = tryPath;
+
+					// 3. OP2 install root (one more level up from OPU)
+					if (dotNetPath == nullptr)
+					{
+						String^ op2Dir = Path::GetDirectoryName(opuDir);
+						if (op2Dir != nullptr)
+						{
+							tryPath = Path::Combine(op2Dir, sdkFileName);
+							if (File::Exists(tryPath))
+								dotNetPath = tryPath;
+						}
+					}
+				}
+			}
+		}
+
+		// Fallback: use mission folder path so failure error is clear
+		if (dotNetPath == nullptr)
+			dotNetPath = Path::Combine(missionDir, sdkFileName);
 
 		// Load DLL and create mission entry instance
 		if (!DotNetMissionDLL::Load(dotNetPath))
 			return false;
-		
+
 		// Call Attach() on DLL
 		return DotNetMissionDLL::Attach(strDllPath);
 	}

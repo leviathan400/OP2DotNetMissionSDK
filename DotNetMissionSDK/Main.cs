@@ -101,11 +101,12 @@ namespace DotNetMissionSDK
 
 		private void InitializeLog()
 		{
-			// Initialize debug log. Console.Out/Error are redirected to DotNetLog.txt,
+			// Initialize debug log. Console.Out/Error are redirected to logs/DotNetLog.txt,
 			// wrapped so every line gets a wall-clock timestamp automatically.
 			try
 			{
-				m_LogFileStream = new FileStream("DotNetLog.txt", FileMode.Create, FileAccess.Write, FileShare.Read);
+				Directory.CreateDirectory("logs");
+				m_LogFileStream = new FileStream(Path.Combine("logs", "DotNetLog.txt"), FileMode.Create, FileAccess.Write, FileShare.Read);
 				m_LogWriter = new StreamWriter(m_LogFileStream);
 				m_LogWriter.AutoFlush = true;
 

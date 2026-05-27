@@ -54,7 +54,8 @@ namespace DotNetMissionSDK.AI
 			this.ownerID = ownerID;
 			try
 			{
-				FileStream fs = new FileStream("BotPlayer_" + ownerID + ".txt", FileMode.Create, FileAccess.Write, FileShare.Read);
+				Directory.CreateDirectory("logs");
+				FileStream fs = new FileStream(Path.Combine("logs", "BotPlayer_" + ownerID + ".txt"), FileMode.Create, FileAccess.Write, FileShare.Read);
 				m_Writer = new StreamWriter(fs) { AutoFlush = true };
 
 				// Wall-clock header line so this log can be correlated with MissionSDK.log
@@ -68,13 +69,17 @@ namespace DotNetMissionSDK.AI
 			}
 		}
 
-		/// <summary>Write a log line prefixed with the game tick. Safe from any thread.</summary>
+		/// <summary>Write a log line prefixed with wall-clock time-of-day and the game tick. Safe from any thread.</summary>
 		public void Write(int tick, string message)
 		{
 			if (m_Writer == null) return;
 			lock (m_WriteLock)
 			{
-				try { m_Writer.WriteLine("[t=" + tick + "] " + message); }
+				try
+				{
+					string stamp = DateTime.Now.ToString("HH:mm:ss.fff");
+					m_Writer.WriteLine("[" + stamp + " t=" + tick + "] " + message);
+				}
 				catch { }
 			}
 		}

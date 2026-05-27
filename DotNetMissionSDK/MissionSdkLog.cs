@@ -14,6 +14,7 @@ namespace DotNetMissionSDK
 	/// </summary>
 	public static class MissionSdkLog
 	{
+		private const string LogDir = "logs";
 		private const string LogFileName = "MissionSDK.log";
 
 		private static readonly object s_Lock = new object();
@@ -26,7 +27,8 @@ namespace DotNetMissionSDK
 			s_Initialized = true;
 			try
 			{
-				FileStream fs = new FileStream(LogFileName, FileMode.Append, FileAccess.Write, FileShare.Read);
+				Directory.CreateDirectory(LogDir);
+				FileStream fs = new FileStream(Path.Combine(LogDir, LogFileName), FileMode.Append, FileAccess.Write, FileShare.Read);
 				s_Writer = new StreamWriter(fs) { AutoFlush = true };
 			}
 			catch (Exception e)
