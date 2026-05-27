@@ -195,8 +195,23 @@ void PlayerEx::RecalculateValues()
 	playerArray[playerNum].boolRecalcValues = 1;
 }
 
+int PlayerEx::GetKids()
+{
+	return isInited ? playerArray[playerNum].kids : HFLNOTINITED;
+}
+
+int PlayerEx::GetWorkers()
+{
+	return isInited ? playerArray[playerNum].workers : HFLNOTINITED;
+}
+
+int PlayerEx::GetScientists()
+{
+	return isInited ? playerArray[playerNum].scientists : HFLNOTINITED;
+}
+
 int PlayerEx::GetNumAvailableWorkers()
-{ 
+{
 	return isInited ? playerArray[playerNum].numAvailableWorkers : HFLNOTINITED;
 }
 

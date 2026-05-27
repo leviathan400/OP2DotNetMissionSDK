@@ -271,10 +271,13 @@ namespace DotNetMissionSDK.State.Snapshot
 			isEden							= player.IsEden();
 			isHuman							= player.IsHuman();
 		
-			kids							= player.Kids();
-			workers							= player.Workers();
-			scientists						= player.Scientists();
-			totalPopulation					= player.TotalPopulation();
+			// player.Kids()/Workers()/Scientists() (Outpost2DLL base accessors) return
+			// garbage (constant 256/4096/4096) — use HFL PlayerEx accessors that read from
+			// the maintained playerArray struct instead.
+			kids							= player.GetKids();
+			workers							= player.GetWorkers();
+			scientists						= player.GetScientists();
+			totalPopulation					= kids + workers + scientists;
 		
 			ore								= player.Ore();
 			rareOre							= player.RareOre();

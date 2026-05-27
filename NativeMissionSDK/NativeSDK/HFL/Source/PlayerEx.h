@@ -18,6 +18,13 @@ public:
 	int GetMaxRareOre();
 	void RecalculateValues();
 
+	// Raw population fields from the reverse-engineered OP2Player struct.
+	// The base _Player::Kids()/Workers()/Scientists() return garbage (256/4096/4096)
+	// in at least some scenarios — these read from the maintained playerArray instead.
+	int GetKids();
+	int GetWorkers();
+	int GetScientists();
+
 	int GetNumAvailableWorkers();
 	int GetNumAvailableScientists();
 	int GetAmountPowerGenerated();

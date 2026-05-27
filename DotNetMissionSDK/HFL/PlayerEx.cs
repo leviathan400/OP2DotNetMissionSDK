@@ -44,6 +44,13 @@ namespace DotNetMissionSDK.HFL
 		// Not sure what this does. If it's required for info to be updated, perhaps call in update loop?
 		public void RecalculateValues()									{ ThreadAssert.MainThreadRequired();	PlayerEx_RecalculateValues(playerID);									}
 
+		// Raw population fields — read from HFL's reverse-engineered playerArray struct.
+		// Use these instead of player.Kids()/Workers()/Scientists() which return garbage
+		// (constant 256/4096/4096 in tested scenarios).
+		public int GetKids()											{ ThreadAssert.MainThreadRequired();	return PlayerEx_GetKids(playerID);										}
+		public int GetWorkers()											{ ThreadAssert.MainThreadRequired();	return PlayerEx_GetWorkers(playerID);									}
+		public int GetScientists()										{ ThreadAssert.MainThreadRequired();	return PlayerEx_GetScientists(playerID);								}
+
 		public int GetNumAvailableWorkers()								{ ThreadAssert.MainThreadRequired();	return PlayerEx_GetNumAvailableWorkers(playerID);						}
 		public int GetNumAvailableScientists()							{ ThreadAssert.MainThreadRequired();	return PlayerEx_GetNumAvailableScientists(playerID);					}
 		public int GetAmountPowerGenerated()							{ ThreadAssert.MainThreadRequired();	return PlayerEx_GetAmountPowerGenerated(playerID);						}
@@ -139,6 +146,9 @@ namespace DotNetMissionSDK.HFL
 
 		[DllImport("DotNetInterop.dll")] private static extern void PlayerEx_RecalculateValues(int playerID);
 
+		[DllImport("DotNetInterop.dll")] private static extern int PlayerEx_GetKids(int playerID);
+		[DllImport("DotNetInterop.dll")] private static extern int PlayerEx_GetWorkers(int playerID);
+		[DllImport("DotNetInterop.dll")] private static extern int PlayerEx_GetScientists(int playerID);
 		[DllImport("DotNetInterop.dll")] private static extern int PlayerEx_GetNumAvailableWorkers(int playerID);
 		[DllImport("DotNetInterop.dll")] private static extern int PlayerEx_GetNumAvailableScientists(int playerID);
 		[DllImport("DotNetInterop.dll")] private static extern int PlayerEx_GetAmountPowerGenerated(int playerID);

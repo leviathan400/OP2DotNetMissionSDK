@@ -103,6 +103,9 @@ extern "C"
 		player->RecalculateValues();
 	}
 
+	extern EXPORT int __stdcall PlayerEx_GetKids(int playerID)									{ PlayerEx* player = &ExtPlayer[playerID];	return player->GetKids();								}
+	extern EXPORT int __stdcall PlayerEx_GetWorkers(int playerID)								{ PlayerEx* player = &ExtPlayer[playerID];	return player->GetWorkers();							}
+	extern EXPORT int __stdcall PlayerEx_GetScientists(int playerID)							{ PlayerEx* player = &ExtPlayer[playerID];	return player->GetScientists();							}
 	extern EXPORT int __stdcall PlayerEx_GetNumAvailableWorkers(int playerID)					{ PlayerEx* player = &ExtPlayer[playerID];	return player->GetNumAvailableWorkers();				}
 	extern EXPORT int __stdcall PlayerEx_GetNumAvailableScientists(int playerID)				{ PlayerEx* player = &ExtPlayer[playerID];	return player->GetNumAvailableScientists();				}
 	extern EXPORT int __stdcall PlayerEx_GetAmountPowerGenerated(int playerID)					{ PlayerEx* player = &ExtPlayer[playerID];	return player->GetAmountPowerGenerated();				}

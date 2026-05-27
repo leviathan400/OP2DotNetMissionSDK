@@ -1,7 +1,9 @@
 ﻿using DotNetMissionSDK.AI.Managers;
 using DotNetMissionSDK.Async;
+using DotNetMissionSDK.HFL;
 using DotNetMissionSDK.State.Snapshot;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -89,7 +91,10 @@ namespace DotNetMissionSDK.AI
 			// every STATUS_WRITE_INTERVAL_TICKS so you can poll current resources,
 			// building/unit counts, combat strength etc. while the mission runs.
 			if (stateSnapshot.time % STATUS_WRITE_INTERVAL_TICKS == 0)
+			{
 				WriteStatus(stateSnapshot);
+				WriteResearchStatus(stateSnapshot);
+			}
 		}
 
 		// Writes a human-readable snapshot of this bot's player state to
@@ -125,13 +130,21 @@ namespace DotNetMissionSDK.AI
 				sb.AppendLine("    Status:      " + p.foodSupply);
 				sb.AppendLine();
 
-				sb.AppendLine("POPULATION (total " + p.totalPopulation + ")");
-				sb.AppendLine("  Kids:        " + p.kids);
-				sb.AppendLine("  Workers:     " + p.workers + "  (required " + p.numWorkersRequired + ", available " + p.numAvailableWorkers + ")");
-				sb.AppendLine("  Scientists:  " + p.scientists + "  (required " + p.numScientistsRequired + ", available " + p.numAvailableScientists + ")");
-				sb.AppendLine("    as workers:  " + p.numScientistsAsWorkers);
-				sb.AppendLine("    researching: " + p.numScientistsAssignedToResearch);
-				sb.AppendLine("  Morale:      " + p.moraleLevel);
+				// NOTE: OP2's player.Kids()/Workers()/Scientists() — and HFL's struct fields
+				// at the same offsets — return constant slot-capacity values (256/4096/4096),
+				// NOT the colony's actual population. The real fields are likely in HFL's
+				// unk[] arrays of the OP2Player struct but reverse-engineering them per
+				// player slot is a separate effort. Memory-scanning works for player 0 only.
+				// For now we show only the workforce numbers we trust.
+				sb.AppendLine("WORKFORCE");
+				sb.AppendLine("  Workers assigned to buildings:    " + p.numWorkersRequired);
+				sb.AppendLine("  Scientists assigned to buildings: " + p.numScientistsRequired);
+				sb.AppendLine("    of which researching:           " + p.numScientistsAssignedToResearch);
+				sb.AppendLine("    of which doing worker jobs:     " + p.numScientistsAsWorkers);
+				sb.AppendLine("  Morale: " + p.moraleLevel);
+				sb.AppendLine();
+				sb.AppendLine("  (Raw kids/workers/scientists counts from OP2 are not currently reliable —");
+				sb.AppendLine("   the accessors return slot capacities. See AI_OVERVIEW.md.)");
 				sb.AppendLine();
 
 				sb.AppendLine("POWER");
@@ -222,6 +235,94 @@ namespace DotNetMissionSDK.AI
 				sb.AppendLine("  Fueling Systems:    " + u.fuelingSystemsCount);
 
 				string path = Path.Combine("logs", "BotPlayer_" + playerID + "_Status.txt");
+				File.WriteAllText(path, sb.ToString());
+			}
+			catch
+			{
+				// Status writing failure must never crash the bot.
+			}
+		}
+
+		// Writes completed research + lab availability to logs/BotPlayer_<N>_Research.txt.
+		// Overwrites each call. Swallows IO exceptions.
+		private void WriteResearchStatus(StateSnapshot stateSnapshot)
+		{
+			try
+			{
+				if (playerID < 0 || playerID >= stateSnapshot.players.Count)
+					return;
+
+				PlayerState p = stateSnapshot.players[playerID];
+				if (p == null)
+					return;
+
+				PlayerUnitState u = p.units;
+				Player op2Player = TethysGame.GetPlayer(playerID);
+
+				StringBuilder sb = new StringBuilder(8192);
+				string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+				sb.AppendLine("# BotPlayer " + playerID + " Research — " + botType + (p.isEden ? " (Eden)" : " (Plymouth)"));
+				sb.AppendLine("# Updated " + stamp + " | tick=" + stateSnapshot.time);
+				sb.AppendLine();
+
+				sb.AppendLine("LABS");
+				sb.AppendLine("  Basic Labs:     " + u.basicLabs.Count);
+				sb.AppendLine("  Standard Labs:  " + u.standardLabs.Count);
+				sb.AppendLine("  Advanced Labs:  " + u.advancedLabs.Count);
+				sb.AppendLine("  Scientists researching: " + p.numScientistsAssignedToResearch);
+				sb.AppendLine();
+
+				// Bucket completed techs by category.
+				Dictionary<TechCategory, List<string>> byCategory = new Dictionary<TechCategory, List<string>>();
+				int totalCompleted = 0;
+				int techCount = Research.GetTechCount();
+
+				for (int i = 0; i < techCount; ++i)
+				{
+					TechInfo info = Research.GetTechInfo(i);
+					if (!info.IsValid())
+						continue;
+
+					int techID = info.GetTechID();
+					if (!op2Player.HasTechnology(techID))
+						continue;
+
+					TechCategory cat = info.GetCategory();
+					string name = info.GetTechName() ?? ("Tech " + techID);
+					int level = info.GetTechLevel();
+					LabType lab = info.GetLab();
+
+					string labShort = lab == LabType.ltBasic ? "B" : lab == LabType.ltStandard ? "S" : lab == LabType.ltAdvanced ? "A" : "-";
+					string line = "  [L" + level + "/" + labShort + "] " + name + "  (id " + techID + ")";
+
+					List<string> bucket;
+					if (!byCategory.TryGetValue(cat, out bucket))
+					{
+						bucket = new List<string>();
+						byCategory[cat] = bucket;
+					}
+					bucket.Add(line);
+					totalCompleted++;
+				}
+
+				sb.AppendLine("COMPLETED RESEARCH (" + totalCompleted + " techs)");
+				sb.AppendLine();
+
+				// Emit in TechCategory enum order so the file is stable.
+				foreach (TechCategory cat in Enum.GetValues(typeof(TechCategory)))
+				{
+					List<string> bucket;
+					if (!byCategory.TryGetValue(cat, out bucket) || bucket.Count == 0)
+						continue;
+
+					sb.AppendLine(cat.ToString() + " (" + bucket.Count + ")");
+					foreach (string line in bucket)
+						sb.AppendLine(line);
+					sb.AppendLine();
+				}
+
+				string path = Path.Combine("logs", "BotPlayer_" + playerID + "_Research.txt");
 				File.WriteAllText(path, sb.ToString());
 			}
 			catch
