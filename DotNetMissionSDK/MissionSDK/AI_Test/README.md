@@ -1,10 +1,10 @@
-# TestAI
+﻿# AI_Test
 
-A from-scratch reference bot that demonstrates the pluggable AI architecture without leaning on TechCor's full goal/task tree, AsyncPump, or weighted-priority system. Single file, runs entirely on the main thread out of `IBotPlayer.Update`. Selected by setting `"AIImpl": "TestAI"` on a player in the mission `.opm`.
+A from-scratch reference bot that demonstrates the pluggable AI architecture without leaning on TechCor's full goal/task tree, AsyncPump, or weighted-priority system. Single file, runs entirely on the main thread out of `IBotPlayer.Update`. Selected by setting `"AIImpl": "AI_Test"` on a player in the mission `.opm`.
 
 ## Status (2026-05-27)
 
-✅ **Working end-to-end on cTest / on6_01.map** with a 3-player AI vs AI vs AI setup.
+**Working end-to-end on cTest / on6_01.map** with a 3-player AI vs AI vs AI setup.
 
 The bot reliably deploys a complete starting colony and starts ore production within ~20 Marks (200 seconds game time):
 
@@ -32,7 +32,7 @@ The bot reliably deploys a complete starting colony and starts ore production wi
 - Research, military, or repair
 - Anything past the initial 6-building setup
 
-TestAI plateaus once the starting kits are deployed. That's by design — it's a clean reference implementation, not a tournament competitor. When the user's colony stalls because it has no more kits and no factory production loop, the bot has done its job.
+AI_Test plateaus once the starting kits are deployed. That's by design — it's a clean reference implementation, not a tournament competitor. When the user's colony stalls because it has no more kits and no factory production loop, the bot has done its job.
 
 ## Where to extend
 
@@ -85,9 +85,10 @@ Only one truck per cycle gets a fresh dock command; trucks already in motion are
 ## File layout
 
 ```
-MissionSDK/TestAI/
+MissionSDK/AI_Test/
 ├── BotPlayer.cs   (~400 LOC, the whole bot)
 └── README.md      (this file)
 ```
 
-Class: `DotNetMissionSDK.TestAI.BotPlayer : DotNetMissionSDK.AI.IBotPlayer`
+Class: `DotNetMissionSDK.AI_Test.BotPlayer : DotNetMissionSDK.AI.IBotPlayer`
+

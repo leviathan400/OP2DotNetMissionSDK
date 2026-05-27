@@ -583,8 +583,8 @@ namespace DotNetMissionSDK
 					case "AI_Blank":
 						m_BotPlayer[i] = new AI_Blank.BotPlayer(pData.GetBotType(), i);
 						break;
-					case "TestAI":
-						m_BotPlayer[i] = new TestAI.BotPlayer(pData.GetBotType(), i);
+					case "AI_Test":
+						m_BotPlayer[i] = new AI_Test.BotPlayer(pData.GetBotType(), i);
 						break;
 					default:
 						Console.WriteLine("Unknown AIImpl '" + aiImpl + "' for player " + i + " - falling back to TechCor");

@@ -328,6 +328,3 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
-
-# Build artifacts staged in Outpost2/ by post-build copy
-Outpost2/*.dll

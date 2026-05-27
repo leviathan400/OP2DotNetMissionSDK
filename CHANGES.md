@@ -276,3 +276,20 @@ Documented in `AI_OVERVIEW.md` (new "Population mode: AI seat vs Human seat" sec
 - **3rd player added** to cTest.opm: ID=2, Eden Green, TechCor AI, starts top-right at (140,18). Native plugin `LevelMain.cpp` bumped from `NumPlayers=2` to `NumPlayers=3`; cTest.dll rebuilt. Lets us run TechCor-vs-AIv2-vs-TechCor to cross-check AI implementations and watch all three bots' Timeline / BuildEvents in parallel.
 - **Em-dashes purged from log output** - PowerShell bulk replace of `—` (U+2014) with `-` across 13 source files, also re-saved all AIv2 / AI_Blank source files with UTF-8 BOM (originals were written without BOM by the namespace-rewrite script, causing the C# compiler to misread non-ASCII chars as Windows-1252 and emit mojibake into the logs).
 - **SDK_VERSION constant** in `CustomLogic.cs` displayed in the in-game Communications panel and `DotNetLog.txt` at mission start. Currently `v0.3.0`. Bump per release.
+
+## AI_Test - from-scratch reference bot - 2026-05-27 (late session)
+
+Added a fourth AI implementation, `MissionSDK/AI_Test/`, written from scratch as a tight reference for what a working bot looks like without TechCor's full goal/task machinery. Single file, ~400 LOC, runs entirely on the main thread out of `IBotPlayer.Update`. See [`MissionSDK/AI_Test/README.md`](DotNetMissionSDK/MissionSDK/AI_Test/README.md) for full behavior, throttling constants, placement rules, and extension points.
+
+Confirmed end-to-end on cTest: deploys all 6 starting buildings in priority order (CC -> Smelter -> Tokamak -> Agridome -> StructureFactory), places Tokamak with an 8-tile separation buffer so a meltdown can't take the colony with it, deploys a mine via `DoDeployMiner` on the nearest unmined common beacon, and drives cargo trucks through a dock / unload / nudge-off-dock pipeline so ore actually accumulates. Plateaus once starting kits are gone (by design - it's a reference bot, not a tournament competitor).
+
+The bot exercises a chunk of SDK surface area that wasn't covered by the existing TechCor / AIv2 implementations:
+- `Pathfinder.GetClosestValidTile` with a custom `IsValidTile` callback (passability, no buildings, no enemy vehicles, tube-connectivity for non-power buildings, separation buffer for meltdown-prone power plants)
+- `commandMap.ConnectsTo` to keep tube-requiring buildings inside CC reach
+- `UnitEx.DoDeployMiner` for mine placement on a surveyed beacon
+- `UnitEx.DoDock` + `StructureState.DoUnloadCargo` truck pipeline with `truck.IsOnDock(structure)` check
+- `UnitEx.DoBuildWall(map_id.Tube, rect)` for earthworker tube laying (rarely fires - placement is good enough that buildings are born connected)
+- Per-tile build-claim cooldown to stop two convecs being sent to overlapping deploy spots
+- `ClearDeployArea` pattern - issue `DoMove` to friendly vehicles inside the proposed footprint before `DoBuild` so OP2 accepts the deploy
+
+The folder was originally named `TestAI` in early iterations; renamed to `AI_Test` so the four AI folders share a consistent naming pattern (`AI/`, `AIv2/`, `AI_Test/`, `AI_Blank/`). Factory dispatch in `MissionLogic.StartMission` updated, `.opm` `AIImpl` value updated, all docs updated.

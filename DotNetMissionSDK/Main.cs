@@ -7,6 +7,8 @@ using DotNetMissionSDK.Triggers;
 using System;
 using System.IO;
 
+// DotNetMissionSDK 3.0
+//
 
 namespace DotNetMissionSDK
 {

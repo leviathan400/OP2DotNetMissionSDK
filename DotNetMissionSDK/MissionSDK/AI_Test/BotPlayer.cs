@@ -1,4 +1,4 @@
-using IBotPlayer = DotNetMissionSDK.AI.IBotPlayer;
+﻿using IBotPlayer = DotNetMissionSDK.AI.IBotPlayer;
 using DotNetMissionSDK.AI;
 using DotNetMissionSDK.Async;
 using DotNetMissionSDK.HFL;
@@ -9,9 +9,9 @@ using DotNetMissionSDK.State.Snapshot.Units;
 using DotNetMissionSDK.State.Snapshot.UnitTypeInfo;
 using System.Linq;
 
-namespace DotNetMissionSDK.TestAI
+namespace DotNetMissionSDK.AI_Test
 {
-	// TestAI - a deliberately small bot written from scratch to demonstrate
+	// AI_Test - a deliberately small bot written from scratch to demonstrate
 	// the pluggable AI architecture. Does NOT use TechCor's goal/task tree,
 	// weighted goals, AsyncPump, or any of the heavy machinery. Runs entirely
 	// on the main thread out of the IBotPlayer.Update hook.
@@ -56,7 +56,7 @@ namespace DotNetMissionSDK.TestAI
 
 		// Tiles claimed by a pending DoBuild command. Prevents two convecs
 		// from being sent to overlapping deploy spots (which is the only
-		// reason TestAI used to "lose" buildings - the second convec arrives
+		// reason AI_Test used to "lose" buildings - the second convec arrives
 		// at a now-occupied tile and fails). Cleared after the build has had
 		// time to complete and the actual structure shows up in the snapshot.
 		private System.Collections.Generic.Dictionary<long, int> m_LastBuildClaimTickByTile = new System.Collections.Generic.Dictionary<long, int>();
@@ -68,19 +68,19 @@ namespace DotNetMissionSDK.TestAI
 			ThreadAssert.MainThreadRequired();
 			this.botType = botType;
 			this.playerID = playerToControlID;
-			BotLog.Get(playerToControlID).Write(TethysGame.Time(), "TestAI construct: type=" + botType);
+			BotLog.Get(playerToControlID).Write(TethysGame.Time(), "AI_Test construct: type=" + botType);
 		}
 
 		public void Start()
 		{
 			isActive = true;
-			BotLog.Get(playerID).Write(TethysGame.Time(), "TestAI: Start");
+			BotLog.Get(playerID).Write(TethysGame.Time(), "AI_Test: Start");
 		}
 
 		public void Stop()
 		{
 			isActive = false;
-			BotLog.Get(playerID).Write(TethysGame.Time(), "TestAI: Stop");
+			BotLog.Get(playerID).Write(TethysGame.Time(), "AI_Test: Stop");
 		}
 
 		public void Update(StateSnapshot snap)
@@ -93,7 +93,7 @@ namespace DotNetMissionSDK.TestAI
 			{
 				PlayerState p = snap.players[playerID];
 				BotLog.Get(playerID).Write(snap.time,
-					"TestAI heartbeat: convecs=" + p.units.convecs.Count +
+					"AI_Test heartbeat: convecs=" + p.units.convecs.Count +
 					" buildings=" + p.units.GetStructures().Count() +
 					" mines=" + p.units.commonOreMines.Count);
 			}
@@ -179,7 +179,7 @@ namespace DotNetMissionSDK.TestAI
 			if (!found)
 			{
 				BotLog.Get(playerID).Write(snap.time,
-					"TestAI: no valid tile for " + kit + " near (" + anchor.x + "," + anchor.y + ")");
+					"AI_Test: no valid tile for " + kit + " near (" + anchor.x + "," + anchor.y + ")");
 				MarkCooldown(convec.unitID, snap.time);
 				return false;
 			}
@@ -190,7 +190,7 @@ namespace DotNetMissionSDK.TestAI
 			ClearDeployArea(snap, convec, kit, foundPt);
 
 			BotLog.Get(playerID).Write(snap.time,
-				"TestAI: deploy " + kit + " at (" + foundPt.x + "," + foundPt.y + ") convec=" + convec.unitID);
+				"AI_Test: deploy " + kit + " at (" + foundPt.x + "," + foundPt.y + ") convec=" + convec.unitID);
 
 			UnitEx u = GameState.GetUnit(convec.unitID);
 			u?.DoBuild(kit, foundPt.x, foundPt.y);
@@ -233,7 +233,7 @@ namespace DotNetMissionSDK.TestAI
 			if (bestBeacon == null) return;
 
 			BotLog.Get(playerID).Write(snap.time,
-				"TestAI: deploy mine at beacon (" + bestBeacon.position.x + "," + bestBeacon.position.y + ") miner=" + miner.unitID);
+				"AI_Test: deploy mine at beacon (" + bestBeacon.position.x + "," + bestBeacon.position.y + ") miner=" + miner.unitID);
 			UnitEx u = GameState.GetUnit(miner.unitID);
 			u?.DoDeployMiner(bestBeacon.position.x, bestBeacon.position.y);
 			MarkCooldown(miner.unitID, snap.time);
@@ -275,7 +275,7 @@ namespace DotNetMissionSDK.TestAI
 				if (!snap.tileMap.IsTilePassable(dest)) continue;
 
 				BotLog.Get(playerID).Write(snap.time,
-					"TestAI: clear area, move unit=" + u.unitID + " from (" + u.position.x + "," + u.position.y +
+					"AI_Test: clear area, move unit=" + u.unitID + " from (" + u.position.x + "," + u.position.y +
 					") to (" + dest.x + "," + dest.y + ") for " + kit + " deploy");
 				UnitEx live = GameState.GetUnit(u.unitID);
 				live?.DoMove(dest.x, dest.y);
@@ -349,7 +349,7 @@ namespace DotNetMissionSDK.TestAI
 					if (truck.curAction == ActionType.moMove) continue;
 
 					BotLog.Get(playerID).Write(snap.time,
-						"TestAI: docking truck=" + truck.unitID + " at smelter " + smelter.unitID +
+						"AI_Test: docking truck=" + truck.unitID + " at smelter " + smelter.unitID +
 						" (" + smelter.position.x + "," + smelter.position.y + ")");
 					liveTruck.DoDock(liveSmelter);
 					dockCommandIssuedThisCycle = true;
@@ -360,14 +360,14 @@ namespace DotNetMissionSDK.TestAI
 					// nudge the truck a tile away if it's been sitting idle
 					// post-unload (TechCor's FixTruckUnloading trick).
 					BotLog.Get(playerID).Write(snap.time,
-						"TestAI: unloading truck=" + truck.unitID + " at smelter " + smelter.unitID);
+						"AI_Test: unloading truck=" + truck.unitID + " at smelter " + smelter.unitID);
 					liveSmelter.DoUnloadCargo();
 
 					if (truck.curAction == ActionType.moDone &&
 						snap.time - st.stateChangedTick > 8)
 					{
 						BotLog.Get(playerID).Write(snap.time,
-							"TestAI: nudge truck=" + truck.unitID + " off dock");
+							"AI_Test: nudge truck=" + truck.unitID + " off dock");
 						liveTruck.DoMove(truck.position.x, truck.position.y + 1);
 					}
 				}
@@ -431,7 +431,7 @@ namespace DotNetMissionSDK.TestAI
 				if (IsTubeTileOnCooldown(tile, snap.time)) continue;
 
 				BotLog.Get(playerID).Write(snap.time,
-					"TestAI: lay tube at (" + tile.x + "," + tile.y + ") earthworker=" + earthworker.unitID +
+					"AI_Test: lay tube at (" + tile.x + "," + tile.y + ") earthworker=" + earthworker.unitID +
 					" pos=(" + earthworker.position.x + "," + earthworker.position.y + ") connecting " +
 					disconnected.unitType + " #" + disconnected.unitID);
 

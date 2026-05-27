@@ -158,7 +158,7 @@ The `.opm` JSON top-level structure:
 Each `Players[]` entry has:
 - `ID`, `IsHuman`, `IsEden`, `Color`, `Allies`
 - `BotType` - `None` for a human, or one of: `PopulationGrowth`, `LaunchStarship`, `EconomicGrowth`, `Passive`, `Defender`, `Balanced`, `Aggressive`, `Harassment`, `Wreckless`
-- `AIImpl` - which bot implementation drives the slot: empty/`TechCor`, `AIv2`, or `AI_Blank`
+- `AIImpl` - which bot implementation drives the slot: empty/`TechCor` (reference), `AIv2` (improvement playground), `AI_Test` (from-scratch single-file reference bot, see [`DotNetMissionSDK/MissionSDK/AI_Test/README.md`](DotNetMissionSDK/MissionSDK/AI_Test/README.md)), or `AI_Blank` (heartbeat-only stub)
 - `Resources` - sub-object containing `TechLevel`, `MoraleLevel`, `Kids`, `Workers`, `Scientists`, `CommonOre`, `RareOre`, `Food`, `SolarSatellites`, `CompletedResearch`, `Units`, `WallTubes`
 
 **About `IsHuman` for AI bots**: OP2's engine applies god-mode population (256/4096/4096 colonists, no food simulation) to any seat with `IsHuman: false`. Setting `IsHuman: true` on an AI seat keeps the bot driving the player (the SDK only checks `BotType != None` for bot construction) but switches OP2 to normal population dynamics so the `.opm Resources.Kids/Workers/Scientists` are honored. Use `IsHuman: true` for AI-vs-AI tournaments where you want bots to actually manage population; use `IsHuman: false` for quick tests or fairness compensation in Human-vs-AI. See `AI_OVERVIEW.md` and `ISSUES.md` for the full investigation.
@@ -222,7 +222,7 @@ When a mission runs, the SDK writes its logs into a `logs/` subfolder of Outpost
 
 This is the active community fork. Original development was 2019–2020 by TechCor, with revisited work in 2025–2026 (refactored MissionReader to use the `MasterVariant` schema). The community fork on this branch:
 
-- **Pluggable AI architecture** — `IBotPlayer` contract lets multiple AI implementations coexist. TechCor's reference AI lives in `MissionSDK/AI/` (frozen baseline), `MissionSDK/AIv2/` is the improvement playground, `MissionSDK/AI_Blank/` is a minimal template for community AI authors. Per-player AI selection via the new `"AIImpl"` field in the `.opm` JSON. See `AI_OVERVIEW.md`.
+- **Pluggable AI architecture** — `IBotPlayer` contract lets multiple AI implementations coexist. `MissionSDK/AI/` is TechCor's reference (frozen baseline), `MissionSDK/AIv2/` is the improvement playground (forked from AI/), `MissionSDK/AI_Test/` is a from-scratch single-file reference bot, `MissionSDK/AI_Blank/` is a minimal heartbeat-only template for new AI authors. Per-player AI selection via the new `"AIImpl"` field in the `.opm` JSON. See `AI_OVERVIEW.md`.
 - Restores buildability on modern Visual Studio
 - Adds robust JSON deserialization (`OnDeserializing` defaults across data classes)
 - Fixes the `.opm` path resolution (resolves relative to mission DLL - no more dual-deploy)

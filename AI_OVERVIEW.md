@@ -26,8 +26,12 @@ DotNetMissionSDK/MissionSDK/
 │   ├── Tasks/...         ← goal + task tree
 │   └── Groups/...        ← vehicle groups
 │
-├── AIv2/       ← improved AI lives here (started as a copy of AI/)
+├── AIv2/       ← improved AI lives here (forked from AI/, weight + cooldown tweaks)
 │   └── (same shape as AI/ — namespace DotNetMissionSDK.AIv2)
+│
+├── AI_Test/     ← from-scratch reference bot, single file, no goal/task tree
+│   ├── BotPlayer.cs      ← deploys starting kits + mine + truck pipeline
+│   └── README.md         ← status, behavior, extension points
 │
 └── AI_Blank/   ← minimal template for new AI authors
     └── BotPlayer.cs      ← heartbeat-only stub, nothing else
@@ -50,7 +54,8 @@ In the mission `.opm`, add an optional `AIImpl` field to each player. The factor
 | `AIImpl` value | Loads | Notes |
 |---|---|---|
 | (empty) or `"TechCor"` | `AI.BotPlayer` | Default — backward-compatible with all existing .opm files |
-| `"AIv2"` | `AIv2.BotPlayer` | The active-development AI |
+| `"AIv2"` | `AIv2.BotPlayer` | The active-development AI - forked from TechCor with weight tables filled in and a longer convec cooldown |
+| `"AI_Test"` | `AI_Test.BotPlayer` | From-scratch single-file bot - deploys 6-building starting colony + truck pipeline, plateaus after. See [AI_Test/README.md](DotNetMissionSDK/MissionSDK/AI_Test/README.md). |
 | `"AI_Blank"` | `AI_Blank.BotPlayer` | Does nothing except log a heartbeat; useful as a "spectator" slot or as a copy-and-fill template |
 
 Unknown values fall back to TechCor with a warning to `DotNetLog.txt`.
@@ -95,7 +100,7 @@ See [`ISSUES.md`](ISSUES.md) for the full investigation and read-back proof that
 
 ## Architecture
 
-Each AI player is a `BotPlayer` instance owning three managers. The instance ticks once per game cycle. The description below covers TechCor's reference AI in [`DotNetMissionSDK/MissionSDK/AI/`](DotNetMissionSDK/MissionSDK/AI/); the AIv2 baseline is currently identical (it was forked from this code).
+Each AI player is a `BotPlayer` instance owning three managers. The instance ticks once per game cycle. The description below covers TechCor's reference AI in [`DotNetMissionSDK/MissionSDK/AI/`](DotNetMissionSDK/MissionSDK/AI/); AIv2 has the same architecture with weight-table and convec-cooldown tweaks layered on. AI_Test ignores this architecture entirely - see its [README](DotNetMissionSDK/MissionSDK/AI_Test/README.md).
 
 ```
 BotPlayer (per AI player)
@@ -300,6 +305,7 @@ From [`BotPlayer.cs`](DotNetMissionSDK/MissionSDK/AI/BotPlayer.cs), 10 personali
 | **AI plugin contract** | `DotNetMissionSDK/MissionSDK/AI/IBotPlayer.cs` |
 | **TechCor's AI (frozen baseline)** | `DotNetMissionSDK/MissionSDK/AI/` |
 | **AIv2 — improved AI playground** | `DotNetMissionSDK/MissionSDK/AIv2/` |
+| **AI_Test — from-scratch reference bot** | `DotNetMissionSDK/MissionSDK/AI_Test/` (see README) |
 | **AI_Blank — minimal template** | `DotNetMissionSDK/MissionSDK/AI_Blank/BotPlayer.cs` |
 | Factory dispatch | `DotNetMissionSDK/MissionSDK/MissionLogic.cs` `StartMission` |
 | Top-level AI controller | `<AI-folder>/BotPlayer.cs` |

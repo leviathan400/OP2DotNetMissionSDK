@@ -1,4 +1,4 @@
-# DotNetMissionSDK - Quick Start Reference
+# DotNetMissionSDK 3.0 - Quick Start Reference
 
 This reference will help you get to work on your custom mission in no time.
 
@@ -72,7 +72,7 @@ You can see how it is used in `MissionLogic.cs`.
 
 It is easiest to enable `BotPlayer` through the JSON mission file, but creating a bot is as simple as calling the constructor, `Start`, and `Update` methods.
 
-> **3.0 fork note**: that "set to human" requirement is encoded in the `.opm` as `"IsHuman": true`. The community fork **3.0** added a pluggable AI architecture - see [`AI_OVERVIEW.md`](../AI_OVERVIEW.md) for the `IBotPlayer` contract, the `MissionSDK/AI/` (TechCor reference), `MissionSDK/AIv2/`, `MissionSDK/AI_Blank/`, and `MissionSDK/TestAI/` folders, and how the `AIImpl` field in the `.opm` selects which AI implementation drives each player. Slots with `IsHuman: false` get OP2's god-mode population (256/4096/4096 colonists, no food simulation) - see [`ISSUES.md`](../ISSUES.md) for the full investigation.
+> **3.0 fork note**: that "set to human" requirement is encoded in the `.opm` as `"IsHuman": true`. The community fork **3.0** added a pluggable AI architecture - see [`AI_OVERVIEW.md`](../AI_OVERVIEW.md) for the `IBotPlayer` contract, the `MissionSDK/AI/` (TechCor reference), `MissionSDK/AIv2/`, `MissionSDK/AI_Test/`, and `MissionSDK/AI_Blank/` folders, and how the `AIImpl` field in the `.opm` selects which AI implementation drives each player. Slots with `IsHuman: false` get OP2's god-mode population (256/4096/4096 colonists, no food simulation) - see [`ISSUES.md`](../ISSUES.md) for the full investigation.
 
 ---
 
