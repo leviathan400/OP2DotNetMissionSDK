@@ -29,6 +29,16 @@ namespace DotNetMissionReader
 				Players.Add(new PlayerData(i));
 		}
 
+		[OnDeserializing]
+		private void OnDeserializing(StreamingContext context)
+		{
+			Name = string.Empty;
+			TethysGame = new GameData();
+			TethysDifficulties = new List<GameData>();
+			Players = new List<PlayerData>();
+			Layouts = new List<AutoLayout>();
+		}
+
 		public MissionVariant(MissionVariant clone)
 		{
 			Name = clone.Name;

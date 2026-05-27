@@ -75,7 +75,7 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Maintenance
 		public override void GeneratePrerequisites()
 		{
 			m_Prerequisites.Add(m_MaintainGuardPostTask = new MaintainGuardPostTask(ownerID));
-			
+
 			if (GameState.players[ownerID].IsEden())
 			{
 				m_Prerequisites.Add(new MaintainObservatoryTask(ownerID));

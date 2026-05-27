@@ -47,6 +47,8 @@ namespace DotNetMissionSDK.AI
 
 			this.botType = botType;
 
+			BotLog.Get(playerToControlID).Write(TethysGame.Time(), "BotPlayer construct: type=" + botType);
+
 			baseManager = new BaseManager(this, playerToControlID);
 			laborManager = new LaborManager(this, playerToControlID);
 			combatManager = new CombatManager(this, playerToControlID);

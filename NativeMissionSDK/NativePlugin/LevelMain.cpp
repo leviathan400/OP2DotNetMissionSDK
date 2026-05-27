@@ -6,24 +6,32 @@
 #include <Windows.h>						// Required for DLLMain
 
 
-// Note: These exports are required by Outpost2.exe from every level
-//		 DLL. They give values for the map and tech trees used by the
-//		 level and a description to place in the level listbox. The
-//		 last export is used to define characteristics of the level.
-//		 See RequiredExports.h for more details.
-//		 ** Be sure to set these when you build your own level**
-// Required data exports  (Description, Map, TechTree, GameType, NumPlayers)
-ExportLevelDetails("LevelDescXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-	"MapFileXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-	"TechFileXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-	Colony, 6)
-//ExportLevelDetails("6P, LoS, '<map name>'", /*"newworld.map"*/"on6_01.map", "MULTITEK.TXT", Colony, 6)
-// Alternative style:
-// Required data exports  (Description, Map, TechTree, GameType, NumPlayers, maxTechLevel, bUnitOnlyMission)
-//ExportLevelDetailsEx("6P, LoS, '<map name>'", "on6_01.map", "MULTITEK.TXT", MultiLastOneStanding, 6, 12, false)
+// ====================================================================
+// MISSION METADATA — edit these for your own mission
+// ====================================================================
+// These exports are required by Outpost2.exe and define what shows up
+// in the script picker. The values below configure the bundled cTest
+// demo (Colony Game vs LaunchStarship AI on on6_01.map).
+//
+// Parameters of ExportLevelDetailsEx (from OP2MissionSDK/Outpost2DLL):
+//   Description   — Shown in the OP2 "PICK A SCRIPT" listbox
+//   MapFile       — .map filename, must exist in OP2 dir (or OPU/maps/)
+//   TechTree      — .txt tech tree file (MULTITEK.TXT, EDEN0.TXT, etc.)
+//   MissionType   — Colony / MultiLandRush / MultiSpaceRace /
+//                   MultiResourceRace / MultiMidas / MultiLastOneStanding
+//                   / AutoDemo / Tutorial (see Outpost2DLL/RequiredExports.h)
+//   NumPlayers    — Active player slots (must match .opm Players count)
+//   MaxTechLevel  — 0–13, caps research progression
+//   UnitOnlyMission — true = morale/colony disabled, false = full game
+// --------------------------------------------------------------------
+ExportLevelDetailsEx("Colony Game, Eden", "on6_01.map", "MULTITEK.TXT", Colony, 2, 12, false)
 
-// Set this to the file name of your custom C# DLL, or set it to the common DLL version you wish to use.
-Export const char SdkPath[] = "DotNetMissionSDKXXXXXXXXXXXXXXX";
+// SdkPath: the C# DLL that contains the mission logic. For most missions
+// using JSON .opm files, leave this as the shared DotNetMissionSDK_v0.dll.
+// For custom C# missions, set this to your own DLL name (e.g. "MyMission_DotNet.dll").
+// The path is resolved relative to this native plugin DLL's directory.
+Export const char SdkPath[] = "DotNetMissionSDK_v0.dll";
+// ====================================================================
 
 static bool CLR_INIT = false;
 static char* moduleFileName;

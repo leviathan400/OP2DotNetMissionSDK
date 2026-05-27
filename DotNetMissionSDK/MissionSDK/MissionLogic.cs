@@ -534,8 +534,9 @@ namespace DotNetMissionSDK
 		{
 			MissionVariant missionVariant = GetCombinedDifficultyVariant(m_Root);
 
-			// Initialize bots
-			for (int i=0; i < missionVariant.Players.Count; ++i)
+			// Initialize bots — only for player slots that actually exist
+			int activePlayerCount = TethysGame.PlayerCount();
+			for (int i=0; i < missionVariant.Players.Count && i < activePlayerCount; ++i)
 			{
 				if (missionVariant.Players[i].GetBotType() == BotType.None)
 					continue;
@@ -635,6 +636,12 @@ namespace DotNetMissionSDK
 		public virtual void Dispose()
 		{
 			Console.WriteLine("Mission Ended.");
+
+			// Broadcast Mission Ended to all logs so they line up across files
+			int endTick;
+			try { endTick = TethysGame.Time(); } catch { endTick = -1; }
+			BotLog.WriteAll(endTick, "Mission Ended");
+			MissionSdkLog.Write("Mission Ended (tick=" + endTick + ")");
 
 			m_TriggerManager.onTriggerFired -= OnTriggerExecuted;
 

@@ -41,10 +41,14 @@ namespace DotNetMissionSDK
 			// Put code that must be called from DLLMain.ProcessAttach here.
 			// There should not be much need to put code here in most cases.
 			// DO NOT PUT MISSION INIT CODE HERE.
-			
+
 			InitializeLog();
 
 			m_MissionDLLName = Path.GetFileNameWithoutExtension(dllPath);
+
+			MissionSdkLog.Write("==================================================");
+			MissionSdkLog.Write("SDK DLL loaded: " + MissionSdkLog.GetSdkIdentity());
+			MissionSdkLog.Write("Mission Attach: " + m_MissionDLLName + " (" + dllPath + ")");
 
 			Console.WriteLine("Initializing DotNet DLL...");
 			Console.WriteLine("Mission DLLName: " + m_MissionDLLName);
@@ -53,40 +57,61 @@ namespace DotNetMissionSDK
 			{
 				Console.WriteLine("Initializing JSON...");
 
-				// Read JSON data
-				if (!File.Exists(m_MissionDLLName + ".opm"))
+				// Resolve .opm path. Look next to the mission DLL first (the natural place),
+				// then fall back to the current working directory (legacy behavior — OPU's
+				// launcher sets CWD to its own subdir, so users used to need duplicate copies).
+				string opmFileName = m_MissionDLLName + ".opm";
+				string dllDir = Path.GetDirectoryName(dllPath) ?? string.Empty;
+				string opmPath = Path.Combine(dllDir, opmFileName);
+
+				if (!File.Exists(opmPath))
 				{
-					Console.WriteLine("JSON data file '" + m_MissionDLLName + ".opm" + " not found!");
-					return false;
+					if (File.Exists(opmFileName))
+					{
+						MissionSdkLog.Write("JSON not next to DLL; falling back to CWD: " + opmFileName);
+						opmPath = opmFileName;
+					}
+					else
+					{
+						Console.WriteLine("JSON data file '" + opmFileName + "' not found!");
+						MissionSdkLog.Write("Attach FAILED: JSON not found at '" + opmPath + "' or in CWD");
+						return false;
+					}
 				}
 
 				// Load JSON data
 				try
 				{
-					m_MissionData = MissionReader.GetMissionData(m_MissionDLLName + ".opm");
+					m_MissionData = MissionReader.GetMissionData(opmPath);
+					MissionSdkLog.Write("JSON loaded: " + opmPath);
 				}
 				catch (Exception ex)
 				{
 					Console.WriteLine(ex.Message);
+					MissionSdkLog.Write("Attach FAILED: JSON parse error: " + ex.Message);
 					return false;
 				}
 			}
 
 			Console.WriteLine("DLL Init complete.");
+			MissionSdkLog.Write("Attach succeeded");
 
 			return true;
 		}
 
 		private void InitializeLog()
 		{
-			// Initialize debug log
+			// Initialize debug log. Console.Out/Error are redirected to DotNetLog.txt,
+			// wrapped so every line gets a wall-clock timestamp automatically.
 			try
 			{
 				m_LogFileStream = new FileStream("DotNetLog.txt", FileMode.Create, FileAccess.Write, FileShare.Read);
 				m_LogWriter = new StreamWriter(m_LogFileStream);
 				m_LogWriter.AutoFlush = true;
-				Console.SetOut(m_LogWriter);
-				Console.SetError(m_LogWriter);
+
+				TimestampedTextWriter stamped = new TimestampedTextWriter(m_LogWriter);
+				Console.SetOut(stamped);
+				Console.SetError(stamped);
 			}
 			catch (Exception e)
 			{
@@ -101,10 +126,23 @@ namespace DotNetMissionSDK
 		/// <returns>True on success.</returns>
 		public bool Initialize()
 		{
-			InitializeSystems();
-			
-			// Initialize mission with JSON data
-			return m_MissionLogic.InitializeNewMission();
+			MissionSdkLog.Write("Initialize: begin");
+			try
+			{
+				InitializeSystems();
+
+				// Initialize mission with JSON data
+				bool ok = m_MissionLogic.InitializeNewMission();
+				MissionSdkLog.Write("Initialize: " + (ok ? "succeeded" : "returned false"));
+				return ok;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("FATAL during Initialize:");
+				Console.WriteLine(ex.ToString());
+				MissionSdkLog.Write("Initialize FAILED: " + ex.GetType().Name + ": " + ex.Message);
+				return false;
+			}
 		}
 
 		private void InitializeSystems()
@@ -177,7 +215,13 @@ namespace DotNetMissionSDK
 		/// </summary>
 		public void Detach()
 		{
+			MissionSdkLog.Write("Detach: begin");
+
 			m_MissionLogic.Dispose();
+
+			// Close bot logs (writes a wall-clock footer to each)
+			DotNetMissionSDK.AI.BotLog.CloseAll();
+
 			m_SaveBuffer.Dispose();
 			StateSnapshot.Destroy();
 			AsyncPump.Release();
@@ -198,6 +242,9 @@ namespace DotNetMissionSDK
 			sError.AutoFlush = true;
 			Console.SetOut(sOut);
 			Console.SetError(sError);
+
+			MissionSdkLog.Write("Detach: complete");
+			MissionSdkLog.Close();
 		}
 	}
 }

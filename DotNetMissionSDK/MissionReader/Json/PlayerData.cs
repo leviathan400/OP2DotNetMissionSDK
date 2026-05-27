@@ -16,6 +16,16 @@ namespace DotNetMissionReader
 		[DataMember(Name = "Resources")]			public ResourceData Resources			{ get; set; }
 		[DataMember(Name = "DifficultyResources")]	public List<ResourceData> Difficulties	{ get; set; }
 
+		[OnDeserializing]
+		private void OnDeserializing(StreamingContext context)
+		{
+			BotType = string.Empty;
+			Color = string.Empty;
+			Allies = new int[0];
+			Resources = new ResourceData();
+			Difficulties = new List<ResourceData>();
+		}
+
 
 		[DataContract]
 		public class ResourceData

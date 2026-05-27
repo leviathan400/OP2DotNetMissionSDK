@@ -78,6 +78,7 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Structure
 		protected override TaskResult PerformTask(StateSnapshot stateSnapshot, TaskRequirements restrictedRequirements, BotCommands unitActions)
 		{
 			PlayerState owner = stateSnapshot.players[ownerID];
+			DotNetMissionSDK.AI.BotLog log = DotNetMissionSDK.AI.BotLog.Get(ownerID);
 
 			// Get idle convec with kit
 			ConvecState convec = owner.units.convecs.FirstOrDefault((unit) =>
@@ -86,11 +87,17 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Structure
 			});
 
 			if (convec == null)
+			{
+				log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): no convec carrying this kit");
 				return new TaskResult(TaskRequirements.None);
+			}
 
 			// Wait for docking or building to complete
 			if (convec.curAction != ActionType.moDone)
+			{
+				log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): convec " + convec.unitID + " busy action=" + convec.curAction);
 				return new TaskResult(TaskRequirements.None);
+			}
 
 			// If we can build earthworkers or have one, we can deploy disconnected structures
 			m_CanBuildDisconnected = owner.units.earthWorkers.Count > 0 || owner.units.vehicleFactories.Count > 0 || !NeedsTube(m_KitToBuild);
@@ -110,13 +117,17 @@ namespace DotNetMissionSDK.AI.Tasks.Base.Structure
 			// Find open location near CC
 			LOCATION foundPt;
 			if (!Pathfinder.GetClosestValidTile(m_TargetLocation, (x, y) => GetTileCost(stateSnapshot, x, y), (x, y) => IsValidTile(stateSnapshot, x, y), out foundPt))
+			{
+				log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): NO VALID TILE near (" + m_TargetLocation.x + "," + m_TargetLocation.y + ") canDisconnect=" + m_CanBuildDisconnected);
 				return new TaskResult(TaskRequirements.None);
+			}
 
 			// TODO: Run GetClosestValidTile asynchronously? ^^^
 
 			ClearDeployArea(convec, convec.cargoType, foundPt, stateSnapshot, ownerID, unitActions);
 
 			// Build structure
+			log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): issuing DoBuild at (" + foundPt.x + "," + foundPt.y + ") convec=" + convec.unitID);
 			unitActions.AddUnitCommand(convec.unitID, 2, () => GameState.GetUnit(convec.unitID)?.DoBuild(m_KitToBuild, foundPt.x, foundPt.y));
 
 			return new TaskResult(TaskRequirements.None);

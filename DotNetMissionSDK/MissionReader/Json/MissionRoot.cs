@@ -31,6 +31,11 @@ namespace DotNetMissionReader
 		private void OnDeserializing(StreamingContext context)
 		{
 			SdkVersion = SDKVersion;
+			LevelDetails = new LevelDetails();
+			MasterVariant = new MissionVariant();
+			MissionVariants = new List<MissionVariant>();
+			Disasters = new DisasterData[0];
+			Triggers = new OP2TriggerData[0];
 			Regions = new List<RegionData>();
 		}
 	}

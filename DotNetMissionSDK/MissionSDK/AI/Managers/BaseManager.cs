@@ -130,6 +130,7 @@ namespace DotNetMissionSDK.AI.Managers
 			m_MaintainArmyGoal.SetVehicleGroupSlots(botPlayer.combatManager.GetUnassignedSlots());
 
 			stateSnapshot.Retain();
+			int tickAtSchedule = TethysGame.Time();
 
 			AsyncPump.Run(() =>
 			{
@@ -138,6 +139,14 @@ namespace DotNetMissionSDK.AI.Managers
 
 				// Get goals and perform goal tasks
 				List<Goal> goals = GetPrioritizedGoals(stateSnapshot);
+
+				// Log top 3 goals with importance
+				BotLog log = BotLog.Get(ownerID);
+				string topGoals = "";
+				for (int gi = 0; gi < goals.Count && gi < 3; ++gi)
+					topGoals += (gi > 0 ? ", " : "") + goals[gi].GetType().Name + "=" + goals[gi].importance.ToString("F2");
+				log.Write(tickAtSchedule, "Top goals: " + topGoals);
+
 				TaskResult goalResults = PerformGoalTasks(goals, stateSnapshot, botCommands);
 				m_ResetVehicleTask.PerformTaskTree(stateSnapshot, goalResults.missingRequirements, botCommands); // Fix stuck vehicles
 

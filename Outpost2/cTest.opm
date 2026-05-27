@@ -1,942 +1,629 @@
 {
-	"LevelDetails":
-	{
-		"LevelDescription":"Colony Game, Eden",
-		"MapName":"on6_01.map",
-		"TechTreeName":"MULTITEK.TXT",
-		"MissionType":"Colony",
-		"NumPlayers":2,
-		"MaxTechLevel":12,
-		"UnitOnlyMission":false
-	},
-	
-	"TethysGame":
-	{
-		"DaylightEverywhere":true,
-		"DaylightMoves":true,
-		"InitialLightLevel":0,
-		"MusicPlayList":
-		{
-			"RepeatStartIndex":0,
-			"SongIDs":[0,1,2]
-		},
-		"Beacons":
-		[
-			{
-				"ID":1,
-				"MapID":"MiningBeacon",
-				"OreType":"Common",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":23, "Y":33 }
-			},
-			{
-				"ID":1,
-				"MapID":"MiningBeacon",
-				"OreType":"Common",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":24, "Y":33 }
-			},
-			{
-				"ID":1,
-				"MapID":"MiningBeacon",
-				"OreType":"Common",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":25, "Y":33 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Rare",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":33, "Y":43 }
-			},
-			{
-				"MapID":"Fumarole",
-				"OreType":"Random",
-				"BarYield":"Random",
-				"BarVariant":"Random",
-				"Position":{ "X":41, "Y":63 }
-			},
-			{
-				"MapID":"MagmaVent",
-				"OreType":"Random",
-				"BarYield":"Random",
-				"BarVariant":"Random",
-				"Position":{ "X":18, "Y":125 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Common",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":28, "Y":98 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Rare",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":38, "Y":98 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Common",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":99, "Y":88 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Rare",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":97, "Y":78 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Common",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":98, "Y":38 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Rare",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":98, "Y":48 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Common",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":73, "Y":103 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Rare",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":71, "Y":98 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Common",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":62, "Y":28 }
-			},
-			{
-				"MapID":"MiningBeacon",
-				"OreType":"Rare",
-				"BarYield":"Bar3",
-				"BarVariant":"Random",
-				"Position":{ "X":60, "Y":38 }
-			}
-		],
-		"Markers":
-		[
-			{
-				"MarkerType":"Circle",
-				"Position":{ "X":1, "Y":1 }
-			}
-		],
-		"Wreckage":
-		[
-			{
-				"TechID":8000,
-				"IsVisible":true,
-				"Position":{ "X":2, "Y":2 }
-			}
-		],
-		"WallTubes":
-		[
-			{
-				"TypeID":"Tube",
-				"Location": { "X":19, "Y":14 }
-			},
-			{
-				"TypeID":"Tube",
-				"Location": { "X":20, "Y":14 }
-			}
-		]
-	},
-	
-	"Players":
-	[
-		{
-			"ID":0,
-			"TechLevel":0,
-			"MoraleLevel":"Excellent",
-			"FreeMorale":true,
-			"IsEden":true,
-			"IsHuman":true,
-			"BotType":"LaunchStarship",
-			"Color":"Blue",
-			"Allies":[],
-			"CenterView": { "X":27, "Y":38 },
-			
-			"Kids":10,
-			"Workers":44,
-			"Scientists":23,
-			"CommonOre":27000,
-			"RareOre":25000,
-			"Food":7000,
-			"SolarSatellites":1,
-			
-			"CompletedResearch":
-			[
-			],
-			
-			"Units":
-			[
-				{
-					"TypeID":"ConVec",
-					"Health":0.5,
-					"Lights":false,
-					"CargoType":"CommandCenter",
-					"Direction":"East",
-					"Position": { "X":7, "Y":38 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"StructureFactory",
-					"Direction":"East",
-					"Position": { "X":7, "Y":37 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommonOreSmelter",
-					"Direction":"East",
-					"Position": { "X":7, "Y":36 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Agridome",
-					"Direction":"East",
-					"Position": { "X":7, "Y":35 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Tokamak",
-					"Direction":"East",
-					"Position": { "X":7, "Y":34 }
-				},
-				{
-					"TypeID":"RoboSurveyor",
-					"Direction":"East",
-					"Position": { "X":7, "Y":39 }
-				},
-				{
-					"TypeID":"RoboMiner",
-					"Direction":"East",
-					"Position": { "X":7, "Y":40 }
-				},
-				{
-					"TypeID":"Earthworker",
-					"Direction":"East",
-					"Position": { "X":7, "Y":41 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":7, "Y":42 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":7, "Y":43 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":7, "Y":44 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":7, "Y":45 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":7, "Y":46 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":7, "Y":47 }
-				}
-			]
-		},
-		{
-			"ID":1,
-			"TechLevel":0,
-			"MoraleLevel":"Excellent",
-			"FreeMorale":true,
-			"IsEden":false,
-			"IsHuman":true,
-			"BotType":"LaunchStarship",
-			"Color":"Red",
-			"Allies":[],
-			"CenterView": { "X":27, "Y":38 },
-			
-			"Kids":10,
-			"Workers":44,
-			"Scientists":23,
-			"CommonOre":27000,
-			"RareOre":25000,
-			"Food":7000,
-			"SolarSatellites":1,
-			
-			"CompletedResearch":
-			[
-			],
-			
-			"Units":
-			[
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommandCenter",
-					"Direction":"East",
-					"Position": { "X":126, "Y":98 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"StructureFactory",
-					"Direction":"East",
-					"Position": { "X":126, "Y":97 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommonOreSmelter",
-					"Direction":"East",
-					"Position": { "X":126, "Y":96 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Agridome",
-					"Direction":"East",
-					"Position": { "X":126, "Y":95 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Tokamak",
-					"Direction":"East",
-					"Position": { "X":126, "Y":94 }
-				},
-				{
-					"TypeID":"RoboSurveyor",
-					"Direction":"East",
-					"Position": { "X":126, "Y":99 }
-				},
-				{
-					"TypeID":"RoboMiner",
-					"Direction":"East",
-					"Position": { "X":126, "Y":100 }
-				},
-				{
-					"TypeID":"Earthworker",
-					"Direction":"East",
-					"Position": { "X":126, "Y":101 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":126, "Y":102 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":126, "Y":103 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":126, "Y":104 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":126, "Y":105 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":126, "Y":106 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":126, "Y":107 }
-				}
-			]
-		},
-		{
-			"ID":2,
-			"TechLevel":0,
-			"MoraleLevel":"Excellent",
-			"FreeMorale":true,
-			"IsEden":false,
-			"IsHuman":true,
-			"BotType":"LaunchStarship",
-			"Color":"Green",
-			"Allies":[],
-			"CenterView": { "X":27, "Y":38 },
-			
-			"Kids":10,
-			"Workers":44,
-			"Scientists":23,
-			"CommonOre":27000,
-			"RareOre":25000,
-			"Food":7000,
-			"SolarSatellites":1,
-			
-			"CompletedResearch":
-			[
-			],
-			
-			"Units":
-			[
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommandCenter",
-					"Direction":"East",
-					"Position": { "X":66, "Y":98 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"StructureFactory",
-					"Direction":"East",
-					"Position": { "X":66, "Y":97 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommonOreSmelter",
-					"Direction":"East",
-					"Position": { "X":66, "Y":96 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Agridome",
-					"Direction":"East",
-					"Position": { "X":66, "Y":95 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Tokamak",
-					"Direction":"East",
-					"Position": { "X":66, "Y":94 }
-				},
-				{
-					"TypeID":"RoboSurveyor",
-					"Direction":"East",
-					"Position": { "X":66, "Y":99 }
-				},
-				{
-					"TypeID":"RoboMiner",
-					"Direction":"East",
-					"Position": { "X":66, "Y":100 }
-				},
-				{
-					"TypeID":"Earthworker",
-					"Direction":"East",
-					"Position": { "X":66, "Y":101 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":102 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":103 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":104 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":105 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":106 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":107 }
-				}
-			]
-		},
-		{
-			"ID":3,
-			"TechLevel":0,
-			"MoraleLevel":"Excellent",
-			"FreeMorale":true,
-			"IsEden":false,
-			"IsHuman":true,
-			"BotType":"LaunchStarship",
-			"Color":"Yellow",
-			"Allies":[],
-			"CenterView": { "X":27, "Y":38 },
-			
-			"Kids":10,
-			"Workers":44,
-			"Scientists":23,
-			"CommonOre":27000,
-			"RareOre":25000,
-			"Food":7000,
-			"SolarSatellites":1,
-			
-			"CompletedResearch":
-			[
-			],
-			
-			"Units":
-			[
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommandCenter",
-					"Direction":"East",
-					"Position": { "X":46, "Y":93 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"StructureFactory",
-					"Direction":"East",
-					"Position": { "X":46, "Y":92 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommonOreSmelter",
-					"Direction":"East",
-					"Position": { "X":46, "Y":91 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Agridome",
-					"Direction":"East",
-					"Position": { "X":46, "Y":90 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Tokamak",
-					"Direction":"East",
-					"Position": { "X":46, "Y":89 }
-				},
-				{
-					"TypeID":"RoboSurveyor",
-					"Direction":"East",
-					"Position": { "X":46, "Y":94 }
-				},
-				{
-					"TypeID":"RoboMiner",
-					"Direction":"East",
-					"Position": { "X":46, "Y":95 }
-				},
-				{
-					"TypeID":"Earthworker",
-					"Direction":"East",
-					"Position": { "X":46, "Y":96 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":46, "Y":97 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":46, "Y":98 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":46, "Y":99 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":46, "Y":100 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":46, "Y":101 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":46, "Y":102 }
-				}
-			]
-		},
-		{
-			"ID":4,
-			"TechLevel":0,
-			"MoraleLevel":"Excellent",
-			"FreeMorale":true,
-			"IsEden":false,
-			"IsHuman":true,
-			"BotType":"LaunchStarship",
-			"Color":"Cyan",
-			"Allies":[],
-			"CenterView": { "X":27, "Y":38 },
-			
-			"Kids":10,
-			"Workers":44,
-			"Scientists":23,
-			"CommonOre":27000,
-			"RareOre":25000,
-			"Food":7000,
-			"SolarSatellites":1,
-			
-			"CompletedResearch":
-			[
-			],
-			
-			"Units":
-			[
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommandCenter",
-					"Direction":"East",
-					"Position": { "X":66, "Y":38 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"StructureFactory",
-					"Direction":"East",
-					"Position": { "X":66, "Y":37 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommonOreSmelter",
-					"Direction":"East",
-					"Position": { "X":66, "Y":36 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Agridome",
-					"Direction":"East",
-					"Position": { "X":66, "Y":35 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Tokamak",
-					"Direction":"East",
-					"Position": { "X":66, "Y":34 }
-				},
-				{
-					"TypeID":"RoboSurveyor",
-					"Direction":"East",
-					"Position": { "X":66, "Y":39 }
-				},
-				{
-					"TypeID":"RoboMiner",
-					"Direction":"East",
-					"Position": { "X":66, "Y":40 }
-				},
-				{
-					"TypeID":"Earthworker",
-					"Direction":"East",
-					"Position": { "X":66, "Y":41 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":42 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":43 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":44 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":45 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":46 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":66, "Y":47 }
-				}
-			]
-		},
-		{
-			"ID":5,
-			"TechLevel":0,
-			"MoraleLevel":"Excellent",
-			"FreeMorale":true,
-			"IsEden":false,
-			"IsHuman":true,
-			"BotType":"LaunchStarship",
-			"Color":"Magenta",
-			"Allies":[],
-			"CenterView": { "X":27, "Y":38 },
-			
-			"Kids":10,
-			"Workers":44,
-			"Scientists":23,
-			"CommonOre":27000,
-			"RareOre":25000,
-			"Food":7000,
-			"SolarSatellites":1,
-			
-			"CompletedResearch":
-			[
-			],
-			
-			"Units":
-			[
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommandCenter",
-					"Direction":"East",
-					"Position": { "X":90, "Y":38 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"StructureFactory",
-					"Direction":"East",
-					"Position": { "X":90, "Y":37 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"CommonOreSmelter",
-					"Direction":"East",
-					"Position": { "X":90, "Y":36 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Agridome",
-					"Direction":"East",
-					"Position": { "X":90, "Y":35 }
-				},
-				{
-					"TypeID":"ConVec",
-					"CargoType":"Tokamak",
-					"Direction":"East",
-					"Position": { "X":90, "Y":34 }
-				},
-				{
-					"TypeID":"RoboSurveyor",
-					"Direction":"East",
-					"Position": { "X":90, "Y":39 }
-				},
-				{
-					"TypeID":"RoboMiner",
-					"Direction":"East",
-					"Position": { "X":90, "Y":40 }
-				},
-				{
-					"TypeID":"Earthworker",
-					"Direction":"East",
-					"Position": { "X":90, "Y":41 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":90, "Y":42 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":90, "Y":43 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":90, "Y":44 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"CommonMetal",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":90, "Y":45 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":90, "Y":46 }
-				},
-				{
-					"TypeID":"CargoTruck",
-					"CargoType":"Food",
-					"CargoAmount":1000,
-					"Direction":"East",
-					"Position": { "X":90, "Y":47 }
-				}
-			]
-		}
-	],
-	
-	"AutoLayouts":
-	[
-	],
-	
-	"Disasters":
-	[
-	],
-	"Triggers":[],
-	"Triggers2":
-	[
-		{
-			"Comment":"Trigger for losing.",
-			"ID":1,
-			"Type":"Operational",
-			"Enabled":true,
-			"OneShot":true,
-			
-			"PlayerID":0,
-			"UnitType":"CommandCenter",
-			"Count":1,
-			"CompareType":"Lower",
-			
-			"Actions":[]
-		},
-		{
-			"Comment":"Random test trigger.",
-			"ID":2,
-			"Type":"VehicleCount",
-			"Enabled":true,
-			"OneShot":true,
-			
-			"PlayerID":0,
-			"Count":2,
-			"CompareType":"GreaterEqual",
-			
-			"Actions":
-			[
-				{ "Type":"AddMessage", "Message":"My Vehicle Message", "PlayerID":0, "SoundID":64 }
-			]
-		},
-		{
-			"Comment":"Trigger for winning.",
-			"ID":3,
-			"Type":"VehicleCount",
-			"Enabled":true,
-			"OneShot":true,
-			
-			"PlayerID":0,
-			"Count":4000,
-			"CompareType":"GreaterEqual",
-			
-			"Actions":[]
-		},
-		{
-			"Comment":"Victory Condition",
-			"ID":4,
-			"Type":"Victory",
-			"Enabled":true,
-			"OneShot":true,
-			
-			"TriggerID":3,
-			"Message":"Create 4000 vehicles",
-			
-			"Actions":[]
-		},
-		{
-			"Comment":"Failure Condition",
-			"ID":5,
-			"Type":"Failure",
-			"Enabled":false,
-			"OneShot":true,
-			
-			"TriggerID":1,
-			
-			"Actions":[]
-		}
-	]
+    "LevelDetails":  {
+                         "LevelDescription":  "Colony Game, Eden",
+                         "MapName":  "on6_01.map",
+                         "TechTreeName":  "MULTITEK.TXT",
+                         "MissionType":  "Colony",
+                         "NumPlayers":  2,
+                         "MaxTechLevel":  12,
+                         "UnitOnlyMission":  false
+                     },
+    "MasterVariant":  {
+                          "TethysGame":  {
+                                             "DaylightEverywhere":  true,
+                                             "DaylightMoves":  true,
+                                             "InitialLightLevel":  0,
+                                             "MusicPlayList":  {
+                                                                   "RepeatStartIndex":  0,
+                                                                   "SongIDs":  [
+                                                                                   0,
+                                                                                   1,
+                                                                                   2
+                                                                               ]
+                                                               },
+                                             "Beacons":  [
+                                                             {
+                                                                 "ID":  1,
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Common",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  23,
+                                                                                  "Y":  33
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "ID":  1,
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Common",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  24,
+                                                                                  "Y":  33
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "ID":  1,
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Common",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  25,
+                                                                                  "Y":  33
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Rare",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  33,
+                                                                                  "Y":  43
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "Fumarole",
+                                                                 "OreType":  "Random",
+                                                                 "BarYield":  "Random",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  41,
+                                                                                  "Y":  63
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MagmaVent",
+                                                                 "OreType":  "Random",
+                                                                 "BarYield":  "Random",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  18,
+                                                                                  "Y":  125
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Common",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  28,
+                                                                                  "Y":  98
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Rare",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  38,
+                                                                                  "Y":  98
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Common",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  99,
+                                                                                  "Y":  88
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Rare",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  97,
+                                                                                  "Y":  78
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Common",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  98,
+                                                                                  "Y":  38
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Rare",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  98,
+                                                                                  "Y":  48
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Common",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  73,
+                                                                                  "Y":  103
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Rare",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  71,
+                                                                                  "Y":  98
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Common",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  62,
+                                                                                  "Y":  28
+                                                                              }
+                                                             },
+                                                             {
+                                                                 "MapID":  "MiningBeacon",
+                                                                 "OreType":  "Rare",
+                                                                 "BarYield":  "Bar3",
+                                                                 "BarVariant":  "Random",
+                                                                 "Position":  {
+                                                                                  "X":  60,
+                                                                                  "Y":  38
+                                                                              }
+                                                             }
+                                                         ],
+                                             "Markers":  [
+                                                             {
+                                                                 "MarkerType":  "Circle",
+                                                                 "Position":  {
+                                                                                  "X":  1,
+                                                                                  "Y":  1
+                                                                              }
+                                                             }
+                                                         ],
+                                             "Wreckage":  [
+                                                              {
+                                                                  "TechID":  8000,
+                                                                  "IsVisible":  true,
+                                                                  "Position":  {
+                                                                                   "X":  2,
+                                                                                   "Y":  2
+                                                                               }
+                                                              }
+                                                          ],
+                                             "WallTubes":  [
+                                                               {
+                                                                   "TypeID":  "Tube",
+                                                                   "Location":  {
+                                                                                    "X":  19,
+                                                                                    "Y":  14
+                                                                                }
+                                                               },
+                                                               {
+                                                                   "TypeID":  "Tube",
+                                                                   "Location":  {
+                                                                                    "X":  20,
+                                                                                    "Y":  14
+                                                                                }
+                                                               }
+                                                           ]
+                                         },
+                          "Players":  [
+                                          {
+                                              "ID":  0,
+                                              "IsEden":  true,
+                                              "IsHuman":  true,
+                                              "BotType":  "None",
+                                              "Color":  "Blue",
+                                              "Allies":  [
+
+                                                         ],
+                                              "Resources":  {
+                                                                "TechLevel":  0,
+                                                                "MoraleLevel":  "Excellent",
+                                                                "FreeMorale":  true,
+                                                                "CenterView":  {
+                                                                                   "X":  27,
+                                                                                   "Y":  38
+                                                                               },
+                                                                "Kids":  10,
+                                                                "Workers":  44,
+                                                                "Scientists":  23,
+                                                                "CommonOre":  27000,
+                                                                "RareOre":  25000,
+                                                                "Food":  7000,
+                                                                "SolarSatellites":  1,
+                                                                "CompletedResearch":  [
+
+                                                                                      ],
+                                                                "Units":  [
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "Health":  0.5,
+                                                                                  "Lights":  false,
+                                                                                  "CargoType":  "CommandCenter",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  38
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "StructureFactory",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  37
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "CommonOreSmelter",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  36
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "Agridome",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  35
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "Tokamak",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  34
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "RoboSurveyor",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  39
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "RoboMiner",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  40
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "Earthworker",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  41
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "CommonMetal",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  42
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "CommonMetal",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  43
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "CommonMetal",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  44
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "CommonMetal",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  45
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "Food",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  46
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "Food",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  7,
+                                                                                                   "Y":  47
+                                                                                               }
+                                                                              }
+                                                                          ]
+                                                            }
+                                          },
+                                          {
+                                              "ID":  1,
+                                              "IsEden":  false,
+                                              "IsHuman":  false,
+                                              "BotType":  "LaunchStarship",
+                                              "Color":  "Red",
+                                              "Allies":  [
+
+                                                         ],
+                                              "Resources":  {
+                                                                "TechLevel":  0,
+                                                                "MoraleLevel":  "Excellent",
+                                                                "FreeMorale":  true,
+                                                                "CenterView":  {
+                                                                                   "X":  27,
+                                                                                   "Y":  38
+                                                                               },
+                                                                "Kids":  10,
+                                                                "Workers":  44,
+                                                                "Scientists":  23,
+                                                                "CommonOre":  27000,
+                                                                "RareOre":  25000,
+                                                                "Food":  7000,
+                                                                "SolarSatellites":  1,
+                                                                "CompletedResearch":  [
+
+                                                                                      ],
+                                                                "Units":  [
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "CommandCenter",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  98
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "StructureFactory",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  97
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "CommonOreSmelter",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  96
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "Agridome",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  95
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "ConVec",
+                                                                                  "CargoType":  "Tokamak",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  94
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "RoboSurveyor",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  99
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "RoboMiner",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  100
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "Earthworker",
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  101
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "CommonMetal",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  102
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "CommonMetal",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  103
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "CommonMetal",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  104
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "CommonMetal",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  105
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "Food",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  106
+                                                                                               }
+                                                                              },
+                                                                              {
+                                                                                  "TypeID":  "CargoTruck",
+                                                                                  "CargoType":  "Food",
+                                                                                  "CargoAmount":  1000,
+                                                                                  "Direction":  "East",
+                                                                                  "Position":  {
+                                                                                                   "X":  126,
+                                                                                                   "Y":  107
+                                                                                               }
+                                                                              }
+                                                                          ]
+                                                            }
+                                          }
+                                      ],
+                          "AutoLayouts":  [
+
+                                          ]
+                      },
+    "Disasters":  [
+
+                  ],
+    "Triggers":  [
+
+                 ],
+    "Triggers2":  [
+                      {
+                          "Comment":  "Trigger for losing.",
+                          "ID":  1,
+                          "Type":  "Operational",
+                          "Enabled":  true,
+                          "OneShot":  true,
+                          "PlayerID":  0,
+                          "UnitType":  "CommandCenter",
+                          "Count":  1,
+                          "CompareType":  "Lower",
+                          "Actions":  [
+
+                                      ]
+                      },
+                      {
+                          "Comment":  "Random test trigger.",
+                          "ID":  2,
+                          "Type":  "VehicleCount",
+                          "Enabled":  true,
+                          "OneShot":  true,
+                          "PlayerID":  0,
+                          "Count":  2,
+                          "CompareType":  "GreaterEqual",
+                          "Actions":  [
+                                          {
+                                              "Type":  "AddMessage",
+                                              "Message":  "My Vehicle Message",
+                                              "PlayerID":  0,
+                                              "SoundID":  64
+                                          }
+                                      ]
+                      },
+                      {
+                          "Comment":  "Trigger for winning.",
+                          "ID":  3,
+                          "Type":  "VehicleCount",
+                          "Enabled":  true,
+                          "OneShot":  true,
+                          "PlayerID":  0,
+                          "Count":  4000,
+                          "CompareType":  "GreaterEqual",
+                          "Actions":  [
+
+                                      ]
+                      },
+                      {
+                          "Comment":  "Victory Condition",
+                          "ID":  4,
+                          "Type":  "Victory",
+                          "Enabled":  true,
+                          "OneShot":  true,
+                          "TriggerID":  3,
+                          "Message":  "Create 4000 vehicles",
+                          "Actions":  [
+
+                                      ]
+                      },
+                      {
+                          "Comment":  "Failure Condition",
+                          "ID":  5,
+                          "Type":  "Failure",
+                          "Enabled":  false,
+                          "OneShot":  true,
+                          "TriggerID":  1,
+                          "Actions":  [
+
+                                      ]
+                      }
+                  ]
 }
