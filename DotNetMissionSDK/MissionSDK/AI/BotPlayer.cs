@@ -26,7 +26,7 @@ namespace DotNetMissionSDK.AI
 		Wreckless,				// Bot will build military units and send them to attack even against overwhelming odds.
 	}
 
-	public class BotPlayer
+	public class BotPlayer : IBotPlayer
 	{
 		public BotType botType						{ get; set; }
 		/*
@@ -87,7 +87,7 @@ namespace DotNetMissionSDK.AI
 			laborManager.Update(stateSnapshot);
 			combatManager.Update(stateSnapshot);
 
-			// Periodic status snapshot — overwrites logs/BotPlayer_<N>_Status.txt
+			// Periodic status snapshot - overwrites logs/BotPlayer_<N>_Status.txt
 			// every STATUS_WRITE_INTERVAL_TICKS so you can poll current resources,
 			// building/unit counts, combat strength etc. while the mission runs.
 			if (stateSnapshot.time % STATUS_WRITE_INTERVAL_TICKS == 0)
@@ -99,7 +99,7 @@ namespace DotNetMissionSDK.AI
 
 		// Writes a human-readable snapshot of this bot's player state to
 		// logs/BotPlayer_<N>_Status.txt. Overwrite each call (FileMode.Create implicit
-		// via File.WriteAllText). Swallows IO exceptions — status writing failure must
+		// via File.WriteAllText). Swallows IO exceptions - status writing failure must
 		// never crash the bot.
 		private void WriteStatus(StateSnapshot stateSnapshot)
 		{
@@ -115,7 +115,7 @@ namespace DotNetMissionSDK.AI
 				StringBuilder sb = new StringBuilder(4096);
 				string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
-				sb.AppendLine("# BotPlayer " + playerID + " Status — " + botType + (p.isEden ? " (Eden)" : " (Plymouth)"));
+				sb.AppendLine("# BotPlayer " + playerID + " Status - " + botType + (p.isEden ? " (Eden)" : " (Plymouth)"));
 				sb.AppendLine("# Updated " + stamp + " | tick=" + stateSnapshot.time);
 				sb.AppendLine();
 
@@ -130,21 +130,23 @@ namespace DotNetMissionSDK.AI
 				sb.AppendLine("    Status:      " + p.foodSupply);
 				sb.AppendLine();
 
-				// NOTE: OP2's player.Kids()/Workers()/Scientists() — and HFL's struct fields
-				// at the same offsets — return constant slot-capacity values (256/4096/4096),
-				// NOT the colony's actual population. The real fields are likely in HFL's
-				// unk[] arrays of the OP2Player struct but reverse-engineering them per
-				// player slot is a separate effort. Memory-scanning works for player 0 only.
-				// For now we show only the workforce numbers we trust.
-				sb.AppendLine("WORKFORCE");
+				// Population values come from HFL's GetKids/GetWorkers/GetScientists
+				// (OP2Player struct offsets 148/152/156). Confirmed real when the
+				// mission has at least one IsHuman=true seat. When all players are
+				// AI, OP2 overrides .opm values with engine defaults (256/4096/4096
+				// = 8448) - see ISSUES.md.
+				int totalColonists = p.kids + p.workers + p.scientists;
+				sb.AppendLine("POPULATION (" + totalColonists + " total)");
+				sb.AppendLine("  Kids:        " + p.kids);
+				sb.AppendLine("  Workers:     " + p.workers);
+				sb.AppendLine("  Scientists:  " + p.scientists);
+				sb.AppendLine("  Morale:      " + p.moraleLevel);
+				sb.AppendLine();
+				sb.AppendLine("WORKFORCE ASSIGNMENT");
 				sb.AppendLine("  Workers assigned to buildings:    " + p.numWorkersRequired);
 				sb.AppendLine("  Scientists assigned to buildings: " + p.numScientistsRequired);
 				sb.AppendLine("    of which researching:           " + p.numScientistsAssignedToResearch);
 				sb.AppendLine("    of which doing worker jobs:     " + p.numScientistsAsWorkers);
-				sb.AppendLine("  Morale: " + p.moraleLevel);
-				sb.AppendLine();
-				sb.AppendLine("  (Raw kids/workers/scientists counts from OP2 are not currently reliable —");
-				sb.AppendLine("   the accessors return slot capacities. See AI_OVERVIEW.md.)");
 				sb.AppendLine();
 
 				sb.AppendLine("POWER");
@@ -155,7 +157,7 @@ namespace DotNetMissionSDK.AI
 				sb.AppendLine("  Unpowered structures:  " + p.numUnpoweredStructures);
 				sb.AppendLine();
 
-				sb.AppendLine("BUILDINGS (" + p.numBuildings + " total — " + p.numActiveBuildings + " active, " + p.numIdleBuildings + " idle)");
+				sb.AppendLine("BUILDINGS (" + p.numBuildings + " total - " + p.numActiveBuildings + " active, " + p.numIdleBuildings + " idle)");
 				PlayerUnitState u = p.units;
 				AppendCount(sb, "Command Centers",   u.commandCenters.Count);
 				AppendCount(sb, "Structure Factories", u.structureFactories.Count);
@@ -262,7 +264,7 @@ namespace DotNetMissionSDK.AI
 				StringBuilder sb = new StringBuilder(8192);
 				string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
-				sb.AppendLine("# BotPlayer " + playerID + " Research — " + botType + (p.isEden ? " (Eden)" : " (Plymouth)"));
+				sb.AppendLine("# BotPlayer " + playerID + " Research - " + botType + (p.isEden ? " (Eden)" : " (Plymouth)"));
 				sb.AppendLine("# Updated " + stamp + " | tick=" + stateSnapshot.time);
 				sb.AppendLine();
 

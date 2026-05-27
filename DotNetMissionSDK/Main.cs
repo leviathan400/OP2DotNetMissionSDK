@@ -58,7 +58,7 @@ namespace DotNetMissionSDK
 				Console.WriteLine("Initializing JSON...");
 
 				// Resolve .opm path. Look next to the mission DLL first (the natural place),
-				// then fall back to the current working directory (legacy behavior — OPU's
+				// then fall back to the current working directory (legacy behavior - OPU's
 				// launcher sets CWD to its own subdir, so users used to need duplicate copies).
 				string opmFileName = m_MissionDLLName + ".opm";
 				string dllDir = Path.GetDirectoryName(dllPath) ?? string.Empty;
@@ -173,7 +173,7 @@ namespace DotNetMissionSDK
 		{
 			// Wrap the whole per-tick body so a C# exception can't propagate through the C++/CLI
 			// shim into native OP2 (which crashes on managed exceptions). On any unhandled exception
-			// we log it and let OP2 continue ticking — far better than a hard crash with no info.
+			// we log it and let OP2 continue ticking - far better than a hard crash with no info.
 			try
 			{
 				// Load the save buffer if it isn't loaded

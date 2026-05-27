@@ -20,7 +20,7 @@ namespace DotNetMissionSDK
 		/// <summary>
 		/// If true, AI-controlled vehicles place a DNA-shaped marker at their destination tile
 		/// whenever they receive a path-based move command (see Vehicle.SetDebugMarker).
-		/// Markers update every time the AI re-plans a vehicle's destination — useful for
+		/// Markers update every time the AI re-plans a vehicle's destination - useful for
 		/// visualizing what the AI is trying to do. Markers only appear for the local player.
 		///
 		/// Set to false for shipped missions to give players a clean view.
@@ -72,9 +72,18 @@ namespace DotNetMissionSDK
 		/// <summary>
 		/// Called when the mission has finished initializing, regardless of whether it is a new game or saved game.
 		/// </summary>
+		// SDK version string surfaced in-game on mission start and to the SDK log.
+		// Bump on every release.
+		public const string SDK_VERSION = "v0.3.0";
+
 		protected override void StartMission()
 		{
 			base.StartMission();
+
+			// Announce SDK version in the Communications panel so anyone watching
+			// a game can tell at a glance which build is running.
+			TethysGame.AddMessage(0, 0, "OP2DotNetMissionSDK " + SDK_VERSION, -1, 0);
+			Console.WriteLine("OP2DotNetMissionSDK " + SDK_VERSION);
 
 			// *** Add custom start code here ***
 		}

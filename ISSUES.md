@@ -10,44 +10,37 @@ Living document for problems we've found but haven't fixed yet. Lower-friction t
 
 ---
 
-## 🟡 Population accessor returns slot-capacity, not current count
+## ✅ AI players run in OP2 god-mode for population/food (engine behavior, not a bug)
 
-**Discovered**: 2026-05-27 while building the per-bot status writer.
+**Investigated**: 2026-05-27. Supersedes the earlier "slot-capacity sentinels" diagnosis, which was wrong - HFL's `GetKids/Workers/Scientists` are correct.
 
-**Symptom**: `_Player::Kids()`, `_Player::Workers()`, `_Player::Scientists()` (and equivalently HFL's `OP2Player` struct fields at offsets 148/152/156) return constant values `256 / 4096 / 4096` regardless of game state:
-- Both AI bots return identical numbers (would diverge if real)
-- Numbers don't change across hours of play
-- Math always works out: `numAvailable + numRequired == 4096` exactly — a partition of a fixed cap
-- 256, 4096 are powers of 2 — classic bit-field limit signatures
+**The behavior**: When a player slot is `"IsHuman": false`, OP2's engine pegs that player's population to fixed defaults (`256 kids / 4096 workers / 4096 scientists` = 8448 total colonists) every tick and skips food simulation entirely (`food consumed = 0` regardless of building count). The .opm `Resources.Kids/Workers/Scientists` values are ignored for AI seats. Human seats use the .opm values normally.
 
-**Conclusion**: Those fields contain **per-player workforce slot capacity** (the max workers a player slot can theoretically hold), not the colony's actual population. OP2 must store real population elsewhere.
+**Why this is intentional**: The AI never starves, never runs out of workers, never has morale crashes. Bots can focus purely on base-building / military / starship and don't need population-management logic to be viable opponents. It's a design choice baked into OP2 since 1997.
 
-**What works instead** (in the same `OP2Player` struct):
-- `numWorkersRequired` — workers currently assigned to buildings (real)
-- `numScientistsRequired` — scientists currently assigned to buildings (real)
-- `numScientistsAssignedToResearch` — researching count (real)
-- `numScientistsAsWorkers` — scientists working as workers (real)
+**Verified end-to-end**:
+1. With Player 0 = `IsHuman: true`, memory reader confirms `10 kids / 44 workers / 23 scientists = 77 total colonists` matching the .opm exactly, with food consumed = 77 (1/colonist).
+2. With Player 0 = `IsHuman: false`, memory reader and HFL both show `256/4096/4096 = 8448` with food consumed = 0.
+3. Calling `SetKids/SetWorkers/SetScientists` on an AI seat post-init **does** write the values (read-back on the same tick confirms - see `BotPlayer_<N>.txt` `Deferred resource re-apply attempt:` block), but OP2 reverts them within the same Mark. So a per-init write is futile; a per-tick write would have to fight OP2's reset every cycle.
 
-**Current workaround**: `BotPlayer_<N>_Status.txt` shows a `WORKFORCE` section with only the trusted fields. The misleading `Kids / Workers / Scientists / total` lines are gone.
+**Design implications**:
+- **AI vs AI**: fair - both sides have god-mode population, so the differentiator is ore acquisition, power, build speed, tile choices, and military strategy. Real gameplay still happens.
+- **AI vs Human**: AI has a structural advantage on workforce. Compensate via .opm tweaks: lower starting resources for the AI, fewer convecs, lower tech cap.
+- **Ore and power are still real constraints for AI** - no smelter, no factories; no Tokamak, no power. The AI is solving real economic problems, just immune to starvation.
 
-**Path to a real fix**:
-1. Set up cTest in OP2 1.3.6 (clean debug environment, no OPULauncher patching)
-2. Wait until populations diverge between Eden and Plymouth (around 10–20 min play time)
-3. Locate `playerArray` base address via debugger
-4. Scan `playerArray[0]` for Eden's kid/worker/scientist counts and `playerArray[1]` for Plymouth's
-5. Matching offsets are the real fields
-6. Add them to HFL's `OP2Player` struct in `NativeMissionSDK/NativeSDK/HFL/Source/PlayerEx.cpp`
-7. Add accessor methods to PlayerEx and corresponding `PlayerEx_GetX` exports in DotNetInterop
-8. Hook them into `PlayerState` and the status writer
+**Workaround to FORCE real population dynamics on AI players** (verified 2026-05-27):
+Set `"IsHuman": true` for the AI seat in the .opm. The SDK's `MissionLogic.StartMission` only checks `BotType != None` when deciding whether to construct a BotPlayer, NOT whether IsHuman is true - so the seat is still driven by AI code (TechCor / AIv2 / custom), but OP2 no longer applies the AI-only god-mode pop. Verified by setting all three cTest players to `IsHuman: true` with distinctive Workers values (44/54/64) and observing each player's Timeline.csv carry the exact .opm value. Trade-off: technically there are now multiple "human" seats which may break true multiplayer / network play - keep `IsHuman: false` for AI seats in shipped competitive missions, use the `IsHuman: true` trick only for local AI-vs-AI testing or single-player-with-AI-opponents missions.
 
-The real fields are likely buried in HFL's `unk1[5]`, `unk2[17]`, `unk3[47]`, or the giant `unk4[662]` arrays. A targeted memory scan with known divergent values should pinpoint them quickly.
-
-**Note on prior attempts**: The user has a memory-reader for OP2 that found population values but only worked for player 0. That was probably looking at the UI-display singleton (which OP2 only computes for the local player), not the per-player playerArray. The playerArray approach should work for all players.
+**Diagnostic code kept in place** (harmless, useful for confirming this if someone re-opens the question):
+- `MissionLogic.cs` captures `.opm Resources` for AI seats and at Mark 1 calls `SetKids/Workers/Scientists` with read-back logging
+- Output appears once per bot in `BotPlayer_<N>.txt` as `Deferred resource re-apply attempt:` followed by `target / before / after` lines
+- `target == after` confirms the Set wrote successfully; later Timeline.csv reverting to 4096 confirms OP2 resets
 
 **Code references**:
-- `NativeMissionSDK/NativeSDK/HFL/Source/PlayerEx.cpp` lines 4–63: `OP2Player` struct with documented offsets
-- `DotNetMissionSDK/HFL/PlayerEx.cs`: `GetKids()/GetWorkers()/GetScientists()` accessors (currently work but return wrong field)
-- `DotNetMissionSDK/MissionSDK/AI/BotPlayer.cs:128`: comment in `WriteStatus` explaining the current limitation
+- `DotNetMissionSDK/MissionSDK/MissionLogic.cs` deferred re-apply block (proof artifact, not a fix)
+- `DotNetMissionSDK/HFL/PlayerEx.cs` `GetKids()/GetWorkers()/GetScientists()` - **correct**
+- `NativeMissionSDK/NativeSDK/HFL/Source/PlayerEx.cpp` `OP2Player` struct offsets 148/152/156 - **correct**
+- `DotNetMissionSDK/MissionSDK/MissionLogic.cs` seat-type logging in `BotLog.Get(i).Write(... seat=HUMAN/AI-only ...)`
 
 ---
 

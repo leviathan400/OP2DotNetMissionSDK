@@ -13,13 +13,22 @@ namespace DotNetMissionSDK
 	{
 		private MissionRoot m_Root;
 		private SaveData m_SaveData;
-		private BotPlayer[] m_BotPlayer = new BotPlayer[8];
+		private IBotPlayer[] m_BotPlayer = new IBotPlayer[8];
 
 		private TriggerManager m_TriggerManager;
 		private EventSystem m_EventSystem;
 
 		private List<DisasterData> m_Disasters = new List<DisasterData>();
 		private Dictionary<int, OP2TriggerData> m_TriggerData = new Dictionary<int, OP2TriggerData>();
+
+		// Deferred population setter: when all seats are AI, OP2 overrides our
+		// SetKids/Workers/Scientists during init with engine defaults (256/4096/4096).
+		// We re-apply the .opm values at Mark 1 to overwrite those defaults so the
+		// bots run with the intended starting population. Per-player .opm values
+		// captured here in StartMission, replayed in Update at tick == REAPPLY_TICK.
+		private const int POPULATION_REAPPLY_TICK = 100;
+		private bool m_DeferredResourcesApplied;
+		private Dictionary<int, PlayerData.ResourceData> m_DeferredResourcesByPlayerID = new Dictionary<int, PlayerData.ResourceData>();
 
 		
 		/// <summary>
@@ -534,14 +543,52 @@ namespace DotNetMissionSDK
 		{
 			MissionVariant missionVariant = GetCombinedDifficultyVariant(m_Root);
 
-			// Initialize bots — only for player slots that actually exist
+			// Wipe per-bot telemetry state so a fresh mission starts with clean
+			// Timeline.csv / BuildEvents.txt files instead of appending to old ones.
+			BotTelemetry.ResetForNewMission();
+
+			// Initialize bots - only for player slots that actually exist.
+			// The .opm AIImpl field selects which AI implementation to load per
+			// player. Empty/"TechCor" → the reference BotPlayer in MissionSDK/AI/.
+			// "AIv2" → the alternative implementation in MissionSDK/AIv2/.
+			m_DeferredResourcesApplied = false;
+			m_DeferredResourcesByPlayerID.Clear();
+
 			int activePlayerCount = TethysGame.PlayerCount();
 			for (int i=0; i < missionVariant.Players.Count && i < activePlayerCount; ++i)
 			{
-				if (missionVariant.Players[i].GetBotType() == BotType.None)
+				PlayerData pData = missionVariant.Players[i];
+				if (pData.GetBotType() == BotType.None)
 					continue;
 
-				m_BotPlayer[i] = new BotPlayer(missionVariant.Players[i].GetBotType(), i);
+				// Capture .opm resource targets for AI-only seats so we can re-apply
+				// at Mark 1 (OP2 overrides initial SetKids/Workers/Scientists when no
+				// human seat is present).
+				if (!pData.IsHuman)
+					m_DeferredResourcesByPlayerID[i] = pData.Resources;
+
+				string aiImpl = string.IsNullOrEmpty(pData.AIImpl) ? "TechCor" : pData.AIImpl;
+				string seatType = pData.IsHuman ? "HUMAN" : "AI-only";
+				BotLog.Get(i).Write(TethysGame.Time(), "AI impl selected: " + aiImpl + " | seat=" + seatType +
+					(pData.IsHuman ? "" : " (OP2 may override .opm population - see ISSUES.md)"));
+
+				switch (aiImpl)
+				{
+					case "TechCor":
+						m_BotPlayer[i] = new BotPlayer(pData.GetBotType(), i);
+						break;
+					case "AIv2":
+						m_BotPlayer[i] = new AIv2.BotPlayer((AIv2.BotType)(int)pData.GetBotType(), i);
+						break;
+					case "AI_Blank":
+						m_BotPlayer[i] = new AI_Blank.BotPlayer(pData.GetBotType(), i);
+						break;
+					default:
+						Console.WriteLine("Unknown AIImpl '" + aiImpl + "' for player " + i + " - falling back to TechCor");
+						m_BotPlayer[i] = new BotPlayer(pData.GetBotType(), i);
+						break;
+				}
+
 				m_BotPlayer[i].Start();
 			}
 
@@ -604,6 +651,63 @@ namespace DotNetMissionSDK
 			// Update bots
 			for (int i=0; i < m_BotPlayer.Length; ++i)
 				m_BotPlayer[i]?.Update(stateSnapshot);
+
+			// Deferred population re-apply: at POPULATION_REAPPLY_TICK, write the
+			// .opm Kids/Workers/Scientists back over whatever defaults OP2 applied
+			// during all-AI init. Fires exactly once.
+			if (!m_DeferredResourcesApplied && stateSnapshot.time >= POPULATION_REAPPLY_TICK)
+			{
+				m_DeferredResourcesApplied = true;
+				foreach (var kv in m_DeferredResourcesByPlayerID)
+				{
+					int pid = kv.Key;
+					var r = kv.Value;
+					try
+					{
+						// TethysGame.GetPlayer returns a PlayerEx, which gives us both
+						// HFL's reverse-engineered GetKids/Workers/Scientists reads AND
+						// OP2's native SetKids/Workers/Scientists writes (inherited from Player).
+						HFL.PlayerEx p = TethysGame.GetPlayer(pid);
+
+						int beforeK = p.GetKids();
+						int beforeW = p.GetWorkers();
+						int beforeS = p.GetScientists();
+
+						p.SetKids(r.Kids);
+						p.SetWorkers(r.Workers);
+						p.SetScientists(r.Scientists);
+
+						// Same-tick read-back. If after-values == target, OP2 accepted
+						// the Set and any later snap back to defaults means it's
+						// resetting them per-tick. If after-values == before-values,
+						// SetKids/Workers/Scientists silently no-op'd.
+						int afterK = p.GetKids();
+						int afterW = p.GetWorkers();
+						int afterS = p.GetScientists();
+
+						BotLog.Get(pid).Write(stateSnapshot.time, "Deferred resource re-apply attempt:");
+						BotLog.Get(pid).Write(stateSnapshot.time, "  target: Kids=" + r.Kids + " Workers=" + r.Workers + " Scientists=" + r.Scientists);
+						BotLog.Get(pid).Write(stateSnapshot.time, "  before: Kids=" + beforeK + " Workers=" + beforeW + " Scientists=" + beforeS);
+						BotLog.Get(pid).Write(stateSnapshot.time, "  after:  Kids=" + afterK + " Workers=" + afterW + " Scientists=" + afterS);
+					}
+					catch (Exception ex)
+					{
+						BotLog.Get(pid).Write(stateSnapshot.time, "Deferred resource re-apply FAILED: " + ex.Message);
+					}
+				}
+			}
+
+			// Per-Mark telemetry for every active bot. Runs at the SDK layer so
+			// every IBotPlayer implementation gets the same logs without each
+			// having to wire them up. 100 ticks = 1 Mark ≈ 10 sec wall-clock.
+			if (stateSnapshot.time % 100 == 0)
+			{
+				for (int i = 0; i < m_BotPlayer.Length; ++i)
+				{
+					if (m_BotPlayer[i] != null)
+						BotTelemetry.WriteAll(i, stateSnapshot);
+				}
+			}
 		}
 
 		private void FireDisaster(DisasterData disaster)

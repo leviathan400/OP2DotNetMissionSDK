@@ -272,7 +272,7 @@ namespace DotNetMissionSDK.State.Snapshot
 			isHuman							= player.IsHuman();
 		
 			// player.Kids()/Workers()/Scientists() (Outpost2DLL base accessors) return
-			// garbage (constant 256/4096/4096) — use HFL PlayerEx accessors that read from
+			// garbage (constant 256/4096/4096) - use HFL PlayerEx accessors that read from
 			// the maintained playerArray struct instead.
 			kids							= player.GetKids();
 			workers							= player.GetWorkers();

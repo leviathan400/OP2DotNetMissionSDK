@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 
@@ -6,7 +6,7 @@ namespace DotNetMissionSDK
 {
 	/// <summary>
 	/// Wraps a TextWriter and prefixes every logical line with a wall-clock timestamp.
-	/// Handles embedded newlines correctly — multi-line output (e.g. ex.ToString())
+	/// Handles embedded newlines correctly - multi-line output (e.g. ex.ToString())
 	/// gets one timestamp per line.
 	/// Used to retrofit timestamps onto DotNetLog.txt without touching any Console.WriteLine
 	/// call site in the codebase.

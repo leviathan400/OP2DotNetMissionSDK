@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -72,7 +72,7 @@ namespace DotNetMissionSDK.AI
 		}
 
 		/// <summary>Write a log line prefixed with wall-clock time-of-day and the game tick. Safe from any thread.
-		/// Consecutive-duplicate messages are suppressed — if a write would produce the same message text
+		/// Consecutive-duplicate messages are suppressed - if a write would produce the same message text
 		/// as the last one we wrote, it's counted instead of logged. When a different message arrives,
 		/// we emit a "(repeated Nx)" summary first. Catches cross-instance rapid-fire bursts.</summary>
 		public void Write(int tick, string message)

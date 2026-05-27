@@ -13,7 +13,7 @@ namespace DotNetMissionSDK.Triggers
 		private EventTriggerCondition[] m_TriggerConditions;
 		private EventTriggerAction[] m_TriggerActions;
 
-		private BotPlayer[] m_BotPlayers;
+		private IBotPlayer[] m_BotPlayers;
 
 		public bool isExecuting { get { return m_TriggerSaveData.isExecuting;		}	}
 
@@ -41,7 +41,7 @@ namespace DotNetMissionSDK.Triggers
 			m_TriggerSaveData.isExecuting = false;
 		}
 
-		public void StartMission(BotPlayer[] botPlayers)
+		public void StartMission(IBotPlayer[] botPlayers)
 		{
 			m_BotPlayers = botPlayers;
 		}

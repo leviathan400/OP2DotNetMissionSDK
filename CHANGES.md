@@ -143,3 +143,132 @@ Build → deploy paths:
 - Trade-off: lost automatic upstream tracking (which we weren't really getting via the pinned V4.1.0 anyway). If we want to sync from upstream HFL/OP2MissionSDK in the future, that becomes a deliberate manual sync, not an "init the submodule" step.
 
 **Files changed**: 209 new tracked files in commit 2 (+11,569 lines), 2 deletions in commit 1.
+
+## Stability & diagnostics — 2026-05-27 (later session)
+
+### `UnitEx_GetUnknownValue` P/Invoke crash — fixed
+- **Problem**: OP2 hard-crashed at ~25 min runtime with `System.EntryPointNotFoundException` for `UnitEx_GetUnknownValue`. C# `UnitEx.cs` declared P/Invokes for `UnitEx_GetUnknownValue` and `UnitEx_SetUnknownValue` but `DotNetInterop.dll` never exported them. C# call → missing entry point → exception → escaped the C++/CLI shim → OP2 process termination.
+- **Fix**: Added stub exports in `NativeMissionSDK/DotNetInterop/HFL/UnitEx.cpp`. Get returns 0, Set is a no-op. The AI's launchpad cargo transfer logic becomes a no-op (starship modules don't actually load on the pad via that path) but everything else works and missions now run for hours. Verified with a 95-min session.
+- **Proper fix deferred**: requires knowing what offset 46 of the OP2 unit struct actually represents. Probably `UnitEx_GetLaunchPadCargo` is the right delegate target. Tracked in `ISSUES.md`.
+
+### Logs moved to `OPU/logs/` subfolder
+- All SDK log files (`MissionSDK.log`, `DotNetLog.txt`, `BotPlayer_<N>.txt`) now write into a `logs/` subdirectory of the OP2 working directory instead of dumping into the OPU root. Subfolder is auto-created on mission start.
+
+### Per-bot log dedup
+- `BotLog` now suppresses consecutive identical messages with a single `(last message repeated Nx)` summary line on the next distinct event. Catches the rapid-fire bursts where multiple goals' BuildStructureTask instances log the same "convec busy" line within milliseconds. Cuts typical bot-log size by ~10x.
+
+### `BotPlayer_<N>_Status.txt` — per-bot state snapshot
+- New `BotPlayer.WriteStatus(stateSnapshot)` writes a human-readable state file every 100 ticks (1 Mark) covering: RESOURCES (ore caps, food production/consumption/status), WORKFORCE (workers/scientists assigned, researching, doing worker jobs, morale), POWER (generated/consumed/available, inactive capacity, unpowered structures), BUILDINGS (total/active/idle plus a counted breakdown of every type), VEHICLES (civilian and military counts), COMBAT (total offensive strength), STARSHIP MODULES (modules in spaceport storage).
+- Overwrite-on-write so you can `tail`/poll it during play to see what each bot is currently doing.
+
+### `BotPlayer_<N>_Research.txt` — per-bot research snapshot
+- New `BotPlayer.WriteResearchStatus(stateSnapshot)` writes alongside Status on the same 100-tick cadence. Reports lab counts (basic / standard / advanced from `PlayerUnitState`), scientists currently researching (from `numScientistsAssignedToResearch`), and every completed tech grouped by `TechCategory` (Basic, Defense, Power, Vehicles, Food, Metals, Weapons, Space, Morale, Disaster, Population, Spaceship). Each tech line shows level + lab type (B/S/A) + name + ID.
+- Uses `Player.HasTechnology(techID)` to identify completed techs by iterating `Research.GetTechCount()`.
+
+### HFL population accessors added
+- **`NativeMissionSDK/NativeSDK/HFL/Source/PlayerEx.{cpp,h}`** — added `GetKids()`, `GetWorkers()`, `GetScientists()` reading directly from the `OP2Player` struct (offsets 148/152/156).
+- **`NativeMissionSDK/DotNetInterop/HFL/PlayerEx.cpp`** — exported `PlayerEx_GetKids` / `PlayerEx_GetWorkers` / `PlayerEx_GetScientists`.
+- **`DotNetMissionSDK/HFL/PlayerEx.cs`** — added `GetKids()` / `GetWorkers()` / `GetScientists()` wrappers with matching `DllImport` declarations.
+- **`DotNetMissionSDK/MissionSDK/State/Snapshot/PlayerState.cs`** — exposes them on the immutable per-tick snapshot.
+- **Caveat**: these fields turned out to return slot-capacity sentinels (256 / 4096 / 4096) for both Eden and Plymouth at all times, not the colony's actual population. The status writer therefore shows only the `numWorkersRequired` / `numScientistsRequired` / `numScientistsAssignedToResearch` / `numScientistsAsWorkers` fields, which are real. The real population fields live elsewhere in the `OP2Player` struct (likely buried in `unk1[5]` / `unk2[17]` / `unk3[47]` / `unk4[662]`) and need a memory-scan reverse-engineering pass to locate per-player. Tracked in `ISSUES.md`.
+
+### `ISSUES.md` — local issue tracker
+- New living document for problems we've found but haven't fixed yet, with a status legend (🔴 Open / 🟡 Investigating / 🟢 Mitigated / ✅ Fixed). Replaces GitHub Issues for solo-dev pace. Currently lists: the population accessor caveat above, `BuildStructureTask` retrying the same blocked location, stubbed `BotType` weight tables (all 10 personalities behave identically), first-fit combat unit selection by build order, `IsTaskComplete` in `BuildStructureTask` always returning false, and the resolved UnitEx crash (kept for posterity).
+
+### `AI_OVERVIEW.md` — architectural tour
+- New companion doc describing how `BotPlayer` works end-to-end: per-tick lifecycle, the three managers (Base / Labor / Combat), the weighted-goal system, how StateSnapshot + AsyncPump keep AI work deterministic and off the main thread, and a roadmap of improvements (real per-personality weight tables, smarter combat scoring, blocked-tile cooldown for `BuildStructureTask`).
+
+### README install path corrections
+- README now correctly describes the **two shared DLLs in `OPU\`** model (both `DotNetInterop.dll` and `DotNetMissionSDK_v0.dll` live in the OPU folder, shared across all missions) rather than the old "DotNetMissionSDK_v0 ships per-mission" wording. Mission folders are just `<MissionName>.dll` + `<MissionName>.opm`.
+
+## Pluggable AI architecture — 2026-05-27 (later session)
+
+The SDK previously had exactly one AI implementation, `BotPlayer`, hard-wired into `MissionLogic.StartMission`. Extracted a minimal plugin contract so multiple AI implementations can coexist and be selected per player slot in the mission `.opm`. Goal is to enable a community AI tournament where different bots fight in the same game.
+
+### `MissionSDK/AI/IBotPlayer.cs` — new shared contract
+- 5-member interface: `int playerID { get; }`, `bool isActive { get; }`, `Start()`, `Stop()`, `Update(StateSnapshot)`. Everything else (managers, goal trees, threat zones, vehicle groups, build-tile cooldowns, etc.) is implementation-private.
+- Lives in `DotNetMissionSDK.AI` namespace so all bot folders can reference it without duplication.
+
+### TechCor's `BotPlayer` now implements `IBotPlayer`
+- Single change: `public class BotPlayer` → `public class BotPlayer : IBotPlayer`. Zero behavioral change; the existing public surface already matched the contract.
+
+### `MissionLogic.cs` factory
+- `private BotPlayer[] m_BotPlayer` → `private IBotPlayer[] m_BotPlayer`.
+- `StartMission` now dispatches on a new `"AIImpl"` string field from the player's JSON:
+  - `""` or `"TechCor"` → `AI.BotPlayer` (default, backward-compatible)
+  - `"AIv2"` → `AIv2.BotPlayer` (active-development AI)
+  - `"AI_Blank"` → `AI_Blank.BotPlayer` (no-op stub / template)
+  - unknown → logs warning and falls back to TechCor
+- Selection is logged to each bot's `BotPlayer_<N>.txt` at construct time so you can confirm which implementation actually loaded.
+
+### Trigger system: `BotPlayer[]` → `IBotPlayer[]`
+- Updated `EventSystem.StartMission`, `EventTrigger.m_BotPlayers` + `StartMission`, and `EventTriggerAction.Execute` signatures to use the interface.
+- One trigger (`TriggerActionType.SetPlayerBotType`) reads/writes `botType` which is TechCor-specific, so it now does `if (botPlayers[id] is BotPlayer tc) tc.botType = …` and silently no-ops for other AI implementations.
+
+### `MissionReader/Json/PlayerData.cs` — new `AIImpl` field
+- Optional string, defaults to empty. Threaded through `OnDeserializing`, copy constructor, and `Concat` so it survives schema merges.
+
+### `MissionSDK/AIv2/` — first alternative AI folder
+- Created by **bulk-copying** the entire `MissionSDK/AI/` tree (70 files: managers, goal tree, task tree, vehicle groups, combat zones, BotLog) into `MissionSDK/AIv2/` and rewriting:
+  - All `namespace DotNetMissionSDK.AI[.Sub]` declarations → `namespace DotNetMissionSDK.AIv2[.Sub]`
+  - All `using DotNetMissionSDK.AI.Sub` directives → `using DotNetMissionSDK.AIv2.Sub` (intra-tree references stay inside AIv2)
+- `AIv2/BotPlayer.cs` has `using IBotPlayer = DotNetMissionSDK.AI.IBotPlayer;` alias because the shared interface lives in the AI namespace — direct `using DotNetMissionSDK.AI;` would create ambiguous references for the dozen class names that now exist in both namespaces.
+- AIv2 has its **own** copy of `BotType` enum, `BotLog`, `Goal`/`Task` base classes, all 15 goals, all tasks, all managers. The AI namespace and AIv2 namespace are fully independent — improving AIv2 cannot break TechCor, and vice versa.
+- AIv2 currently plays identically to TechCor since it's a fresh clone; behavioral improvements will go here from now on.
+
+### `MissionSDK/AI_Blank/` — minimal template
+- Single file: `AI_Blank/BotPlayer.cs`. Implements `IBotPlayer`, has the same constructor signature as the other implementations, but does nothing in `Update` except log a heartbeat once per Mark.
+- Useful as (a) a fast "spectator" slot in tests, (b) a copy-and-fill starting point for new AI authors.
+
+### Docs
+- New top-level "Pluggable AI architecture" section in `AI_OVERVIEW.md` explaining the contract, the three folders (AI / AIv2 / AI_Blank), the `AIImpl` JSON field, and how to add a new AI.
+- File map in `AI_OVERVIEW.md` reorganized to call out which paths apply to each AI folder.
+- README maintenance bullets list the pluggable AI architecture as a key feature of this fork.
+
+### Verified
+- Clean build (only the pre-existing CS0162 warning in Vehicle.cs).
+- End-to-end test: cTest mission with player 0 = TechCor, player 1 = AIv2-stub (before the bulk copy). `BotPlayer_0.txt` showed TechCor goal evaluation and DoBuild commands; `BotPlayer_1.txt` showed `AI impl selected: AIv2` + construct + Start + heartbeats. The factory dispatch and per-tick polymorphism work as designed.
+
+## AI population god-mode investigation - 2026-05-27 (later session)
+
+Spent a chunk of the session investigating apparent "wrong" population values (`256 kids / 4096 workers / 4096 scientists` returned by HFL accessors for AI bots, regardless of what the `.opm` requested). Earlier session's diagnosis ("HFL accessors return slot-capacity sentinels") turned out to be wrong - the accessors are correct.
+
+### Actual finding
+OP2's engine **pegs population to fixed defaults and skips food simulation for any player slot with `IsHuman: false`**, every tick. The `.opm Resources.Kids/Workers/Scientists` are ignored for AI seats; food consumed stays at 0. This is intentional 1997-era engine behavior, not a bug - it lets AI bots focus on base-building / military without starving themselves.
+
+### Verification chain
+1. Flipped player 0 to `IsHuman: true` in cTest.opm → memory reader showed exactly the .opm values (10/44/23 = 77 colonists, food consumed = 77). Same DLL, same map.
+2. Flipped player 0 back to `IsHuman: false` → 256/4096/4096 = 8448, food consumed = 0.
+3. Tried a deferred `SetKids/Workers/Scientists` re-apply at Mark 1 with read-back logging:
+   - **before**: 256/4096/4096 (OP2 defaults)
+   - **after** (same tick, immediately after Set): exactly the target (10/44/23 for player 1, 10/100/23 for player 2 with custom workers=100)
+   - **Timeline at Mark 2 and onward**: back to 256/4096/4096
+   - Conclusion: Set DOES write, but OP2's per-tick simulation immediately reverts AI seats to defaults.
+
+### Resolution
+- Don't fight it. AI vs AI is fair (both god-moded). AI vs Human means AI has a structural workforce advantage - design around it with lower starting resources, fewer convecs, or tech caps in the .opm.
+- Ore and power remain real constraints for AI - no smelter means no factories, no Tokamak means no power. The bot still solves a meaningful economic problem.
+
+### IsHuman=true workaround for AI bots (discovered after the main investigation)
+`MissionLogic.StartMission` constructs a `BotPlayer` for any slot where `BotType != None`, independent of the `IsHuman` flag. So setting `"IsHuman": true` on a seat does **not** disable the AI - the seat is still driven by the configured AI implementation (TechCor / AIv2 / custom). It does, however, switch OP2 out of god-mode for that player's population/food simulation, so the `.opm Resources.Kids/Workers/Scientists` values are honored, colonists consume food, and morale matters.
+
+Verified 2026-05-27 by setting all three cTest players to `IsHuman: true` with distinctive Workers values (`44 / 54 / 64`). Each player's `Timeline.csv` carried the exact .opm value through every Mark. OP2 launches fine with multiple human seats locally; this may not survive true network multiplayer but is fine for local AI-vs-AI testing.
+
+This means:
+- **All-AI tournament with realistic population**: mark every AI seat as `IsHuman: true` in the .opm
+- **All-AI quick-test mode (default)**: leave seats as `IsHuman: false` for unlimited workforce, faster iteration
+- **Human vs AI**: AI seats `IsHuman: false` for fairness compensation (AI gets god-mode pop, balance via lower starting resources)
+- **Shipped multiplayer**: keep AI seats `IsHuman: false`
+
+Documented in `AI_OVERVIEW.md` (new "Population mode: AI seat vs Human seat" section) and `ISSUES.md` (workaround paragraph appended to the closed god-mode entry).
+
+### Plumbed in this round (kept as future-proofing)
+- **`BotPlayer_<N>_Status.txt` POPULATION block restored** - now shows `Kids / Workers / Scientists / Morale` from HFL accessors. Separate `WORKFORCE ASSIGNMENT` block keeps the trusted `numWorkersRequired` / etc. for "actually assigned to active buildings" counts. Both blocks updated in `AI/BotPlayer.cs` and `AIv2/BotPlayer.cs`.
+- **`BotPlayer_<N>_Timeline.csv` got 4 new columns**: `kids,workers,scientists,totalColonists`. Useful for trend analysis once you have a human seat where these values are real.
+- **`BotLog` header now shows seat type per player**: `AI impl selected: <impl> | seat=HUMAN` or `seat=AI-only (OP2 may override .opm population - see ISSUES.md)`. Lets you tell at a glance whether to trust population values for that slot.
+- **Deferred resource re-apply diagnostic kept in `MissionLogic.cs`** - fires once at Mark 1, logs `target / before / after` to each AI bot's log. Proves the Set worked and OP2 reverted. Future-proofing: if someone re-opens the population question, the proof artifact is already in their logs.
+- **`ISSUES.md` rewritten** - earlier "slot-capacity sentinels" entry replaced with a closed entry documenting OP2's god-mode behavior, the proof, and the AI-vs-AI / AI-vs-Human design implications.
+- **Tile blacklist removed from AIv2** - was hijacking convec destinations mid-trip during base-building, causing Plymouth's base to sprawl and the smelter to land outside CC tube reach. Bumped `BUILD_REISSUE_COOLDOWN_TICKS` from 30 to 100 in AIv2 to give convecs a full Mark to deliver kits before another goal redirects them. AIv2 weight tables also softened (LaunchStarship 1.5 → 1.1, other personalities pulled to subtler multipliers) to stop early-game LaunchStarship from dominating the priority list before any economy exists.
+- **3rd player added** to cTest.opm: ID=2, Eden Green, TechCor AI, starts top-right at (140,18). Native plugin `LevelMain.cpp` bumped from `NumPlayers=2` to `NumPlayers=3`; cTest.dll rebuilt. Lets us run TechCor-vs-AIv2-vs-TechCor to cross-check AI implementations and watch all three bots' Timeline / BuildEvents in parallel.
+- **Em-dashes purged from log output** - PowerShell bulk replace of `—` (U+2014) with `-` across 13 source files, also re-saved all AIv2 / AI_Blank source files with UTF-8 BOM (originals were written without BOM by the namespace-rewrite script, causing the C# compiler to misread non-ASCII chars as Windows-1252 and emit mojibake into the logs).
+- **SDK_VERSION constant** in `CustomLogic.cs` displayed in the in-game Communications panel and `DotNetLog.txt` at mission start. Currently `v0.3.0`. Bump per release.

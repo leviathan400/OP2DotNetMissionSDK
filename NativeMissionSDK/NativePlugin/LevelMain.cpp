@@ -24,7 +24,7 @@
 //   MaxTechLevel  — 0–13, caps research progression
 //   UnitOnlyMission — true = morale/colony disabled, false = full game
 // --------------------------------------------------------------------
-ExportLevelDetailsEx("Colony Game, Eden", "on6_01.map", "MULTITEK.TXT", Colony, 2, 12, false)
+ExportLevelDetailsEx("Colony Game, Eden", "on6_01.map", "MULTITEK.TXT", Colony, 3, 12, false)
 
 // SdkPath: the C# DLL that contains the mission logic. For most missions
 // using JSON .opm files, leave this as the shared DotNetMissionSDK_v0.dll.

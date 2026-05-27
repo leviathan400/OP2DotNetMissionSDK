@@ -12,9 +12,90 @@ Living document tracking what the OP2DotNetMissionSDK AI does today, how it's pu
 
 ---
 
+## Pluggable AI architecture (2026-05-27)
+
+The SDK supports **multiple AI implementations side-by-side**. Each AI lives in its own folder under `DotNetMissionSDK/MissionSDK/`, implements the [`IBotPlayer`](DotNetMissionSDK/MissionSDK/AI/IBotPlayer.cs) contract, and is selected per player slot in the mission `.opm`.
+
+```
+DotNetMissionSDK/MissionSDK/
+├── AI/         ← TechCor's reference AI (canonical, frozen)
+│   ├── IBotPlayer.cs     ← shared contract: Start / Stop / Update
+│   ├── BotPlayer.cs      ← TechCor's implementation
+│   ├── BotLog.cs         ← per-bot diagnostic logger (shared infra)
+│   ├── Managers/Base/Labor/Combat
+│   ├── Tasks/...         ← goal + task tree
+│   └── Groups/...        ← vehicle groups
+│
+├── AIv2/       ← improved AI lives here (started as a copy of AI/)
+│   └── (same shape as AI/ — namespace DotNetMissionSDK.AIv2)
+│
+└── AI_Blank/   ← minimal template for new AI authors
+    └── BotPlayer.cs      ← heartbeat-only stub, nothing else
+```
+
+The interface itself is tiny — `Start()`, `Stop()`, `Update(StateSnapshot)`, plus `playerID` and `isActive` properties. Anything beyond that is each implementation's choice.
+
+### Selecting which AI to run
+
+In the mission `.opm`, add an optional `AIImpl` field to each player. The factory in [`MissionLogic.StartMission`](DotNetMissionSDK/MissionSDK/MissionLogic.cs) dispatches on it:
+
+```json
+"Players": [
+  { "ID": 0, "BotType": "LaunchStarship", "AIImpl": "TechCor",  ... },
+  { "ID": 1, "BotType": "LaunchStarship", "AIImpl": "AIv2",     ... },
+  { "ID": 2, "BotType": "None",           "AIImpl": "AI_Blank", ... }
+]
+```
+
+| `AIImpl` value | Loads | Notes |
+|---|---|---|
+| (empty) or `"TechCor"` | `AI.BotPlayer` | Default — backward-compatible with all existing .opm files |
+| `"AIv2"` | `AIv2.BotPlayer` | The active-development AI |
+| `"AI_Blank"` | `AI_Blank.BotPlayer` | Does nothing except log a heartbeat; useful as a "spectator" slot or as a copy-and-fill template |
+
+Unknown values fall back to TechCor with a warning to `DotNetLog.txt`.
+
+### Adding a new AI
+
+1. Copy `AI_Blank/` to `YourBotName/` (or fork `AIv2/`'s richer baseline if you want to start from working code)
+2. Rename the namespace from `DotNetMissionSDK.AI_Blank` to `DotNetMissionSDK.YourBotName`
+3. Add a `case "YourBotName": ...` to the factory switch in `MissionLogic.StartMission`
+4. Set `"AIImpl": "YourBotName"` on a player in your mission .opm
+
+`AI/` (TechCor's) is **frozen** — changes there go to `AIv2/` instead so we always have the working baseline to compare against. `AIv2/` is the playground for improvements that we want to evolve into the next-generation AI.
+
+---
+
+## Population mode: AI seat vs Human seat (2026-05-27)
+
+OP2 has an engine-level behavior that matters for AI design: **player slots with `"IsHuman": false` get god-mode population/food simulation** - fixed defaults of 256 kids / 4096 workers / 4096 scientists (= 8448 colonists), zero food consumption, no starvation. The `.opm Resources.Kids/Workers/Scientists` values are ignored for these seats. This is intentional 1997-era behavior so the AI never dies of population/morale problems and can focus on base-building / combat.
+
+`IsHuman: true` seats get normal population dynamics - the `.opm` values are honored, colonists consume food, and morale matters.
+
+**Important**: `BotPlayer` construction in [`MissionLogic.StartMission`](DotNetMissionSDK/MissionSDK/MissionLogic.cs) is independent of `IsHuman` - it only checks `BotType != None`. So setting a slot to `IsHuman: true` does NOT disable the AI; the seat is still driven entirely by the configured AI implementation. The flag just controls which population/food simulation OP2 uses for that slot.
+
+### When to use which
+
+| Scenario | Recommended setup |
+|---|---|
+| AI vs AI tournament with realistic colony management | All seats `IsHuman: true`. Bots have to maintain population, build residences, feed colonies, manage morale. Fairest competition. |
+| AI vs AI quick-test, focus on base-build / combat | All seats `IsHuman: false`. Bots have unlimited workforce and never starve; ore + power are the only economic constraints. Faster, easier to read. |
+| Human vs AI competitive | Human seat `IsHuman: true`, AI seats `IsHuman: false`. AI gets workforce advantage; balance it via lower starting resources / fewer convecs / lower tech cap in the AI's `Resources` block. |
+| Shipped multiplayer mission | AI seats `IsHuman: false`. Multiple `IsHuman: true` seats may confuse OP2's network play; the trick is for local testing, not network multiplayer. |
+
+The seat type for each bot is logged at startup in `BotPlayer_<N>.txt`:
+```
+[t=0] AI impl selected: TechCor | seat=HUMAN
+[t=0] AI impl selected: AIv2 | seat=AI-only (OP2 may override .opm population - see ISSUES.md)
+```
+
+See [`ISSUES.md`](ISSUES.md) for the full investigation and read-back proof that confirms `SetKids/Workers/Scientists` is reverted by OP2 every tick for `IsHuman: false` seats.
+
+---
+
 ## Architecture
 
-Each AI player is a [`BotPlayer`](DotNetMissionSDK/MissionSDK/AI/BotPlayer.cs) instance owning three managers. The instance ticks once per game cycle.
+Each AI player is a `BotPlayer` instance owning three managers. The instance ticks once per game cycle. The description below covers TechCor's reference AI in [`DotNetMissionSDK/MissionSDK/AI/`](DotNetMissionSDK/MissionSDK/AI/); the AIv2 baseline is currently identical (it was forked from this code).
 
 ```
 BotPlayer (per AI player)
@@ -216,15 +297,20 @@ From [`BotPlayer.cs`](DotNetMissionSDK/MissionSDK/AI/BotPlayer.cs), 10 personali
 
 | Concern | Path |
 |---|---|
-| Top-level AI controller | `DotNetMissionSDK/MissionSDK/AI/BotPlayer.cs` |
-| Base / economy / research | `DotNetMissionSDK/MissionSDK/AI/Managers/BaseManager.cs` |
-| Worker assignment | `DotNetMissionSDK/MissionSDK/AI/Managers/LaborManager.cs` |
-| Combat | `DotNetMissionSDK/MissionSDK/AI/Managers/CombatManager.cs` |
-| Goals (15 files) | `DotNetMissionSDK/MissionSDK/AI/Tasks/Base/Goals/*.cs` |
-| Tasks (build, mine, repair, etc.) | `DotNetMissionSDK/MissionSDK/AI/Tasks/Base/*/*.cs` |
-| Threat zones | `DotNetMissionSDK/MissionSDK/AI/Combat/CombatZone.cs` |
-| Vehicle groups | `DotNetMissionSDK/MissionSDK/AI/Groups/*.cs` |
-| Per-AI diagnostic log | `DotNetMissionSDK/MissionSDK/AI/BotLog.cs` |
+| **AI plugin contract** | `DotNetMissionSDK/MissionSDK/AI/IBotPlayer.cs` |
+| **TechCor's AI (frozen baseline)** | `DotNetMissionSDK/MissionSDK/AI/` |
+| **AIv2 — improved AI playground** | `DotNetMissionSDK/MissionSDK/AIv2/` |
+| **AI_Blank — minimal template** | `DotNetMissionSDK/MissionSDK/AI_Blank/BotPlayer.cs` |
+| Factory dispatch | `DotNetMissionSDK/MissionSDK/MissionLogic.cs` `StartMission` |
+| Top-level AI controller | `<AI-folder>/BotPlayer.cs` |
+| Base / economy / research | `<AI-folder>/Managers/BaseManager.cs` |
+| Worker assignment | `<AI-folder>/Managers/LaborManager.cs` |
+| Combat | `<AI-folder>/Managers/CombatManager.cs` |
+| Goals (15 files) | `<AI-folder>/Tasks/Base/Goals/*.cs` |
+| Tasks (build, mine, repair, etc.) | `<AI-folder>/Tasks/Base/*/*.cs` |
+| Threat zones | `<AI-folder>/Combat/CombatZone.cs` |
+| Vehicle groups | `<AI-folder>/Groups/*.cs` |
+| Per-AI diagnostic log | `DotNetMissionSDK/MissionSDK/AI/BotLog.cs` (TechCor) and `DotNetMissionSDK/MissionSDK/AIv2/BotLog.cs` (AIv2 — independent static state) |
 | Mission-author toggles | `DotNetMissionSDK/CustomLogic.cs` |
 
 ---

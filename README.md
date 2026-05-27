@@ -11,7 +11,7 @@ Forum thread: [OP2 Scenario Project](https://forum.outpost2.net/index.php/topic,
 
 ---
 
-## Aboutc
+## About
 
 DotNetMissionSDK lets mission authors write Outpost 2 scenarios in **C#** (or pure JSON `.opm` files, no coding required). Notable features that have no equivalent in the original C++ SDK:
 
@@ -158,7 +158,10 @@ The `.opm` JSON top-level structure:
 Each `Players[]` entry has:
 - `ID`, `IsHuman`, `IsEden`, `Color`, `Allies`
 - `BotType` - `None` for a human, or one of: `PopulationGrowth`, `LaunchStarship`, `EconomicGrowth`, `Passive`, `Defender`, `Balanced`, `Aggressive`, `Harassment`, `Wreckless`
+- `AIImpl` - which bot implementation drives the slot: empty/`TechCor`, `AIv2`, or `AI_Blank`
 - `Resources` - sub-object containing `TechLevel`, `MoraleLevel`, `Kids`, `Workers`, `Scientists`, `CommonOre`, `RareOre`, `Food`, `SolarSatellites`, `CompletedResearch`, `Units`, `WallTubes`
+
+**About `IsHuman` for AI bots**: OP2's engine applies god-mode population (256/4096/4096 colonists, no food simulation) to any seat with `IsHuman: false`. Setting `IsHuman: true` on an AI seat keeps the bot driving the player (the SDK only checks `BotType != None` for bot construction) but switches OP2 to normal population dynamics so the `.opm Resources.Kids/Workers/Scientists` are honored. Use `IsHuman: true` for AI-vs-AI tournaments where you want bots to actually manage population; use `IsHuman: false` for quick tests or fairness compensation in Human-vs-AI. See `AI_OVERVIEW.md` and `ISSUES.md` for the full investigation.
 
 Use the bundled `Outpost2\cTest.opm` as a reference.
 
@@ -191,6 +194,8 @@ When a mission runs, the SDK writes its logs into a `logs/` subfolder of Outpost
 | `MissionSDK.log` | `OPU\logs\` | **append** | SDK lifecycle history (DLL load, attach, init, detach) - persists across runs so you can see every mission run in one file |
 | `DotNetLog.txt` | `OPU\logs\` | overwrite | Every `Console.WriteLine` from C# code, wall-clock-timestamped (one timestamp per line, multi-line exception traces stay readable) |
 | `BotPlayer_<N>.txt` | `OPU\logs\` | overwrite | Per-AI behavior trace: top goals each cycle, build attempts, exceptions caught during Update. One file per bot owner ID. |
+| `BotPlayer_<N>_Status.txt` | `OPU\logs\` | overwrite | Per-bot state snapshot rewritten every 100 ticks (1 Mark): resources, workforce, power, building/vehicle counts, combat strength, starship modules in storage. Poll this while a mission runs to see what each bot is doing. |
+| `BotPlayer_<N>_Research.txt` | `OPU\logs\` | overwrite | Per-bot research snapshot rewritten every 100 ticks: lab counts (basic/standard/advanced), scientists researching, and every completed tech grouped by category with level + lab type. |
 | `Outpost2Log.txt` | `OPU\` | overwrite | OP2's own native log (separate from this SDK; stays at OPU root) |
 
 **Bot log line format**: `[HH:mm:ss.fff t=N] <message>` - wall-clock time-of-day plus game tick, so events can be correlated both with real-world events and with `TethysGame.Time()` references in code.
@@ -217,19 +222,24 @@ When a mission runs, the SDK writes its logs into a `logs/` subfolder of Outpost
 
 This is the active community fork. Original development was 2019–2020 by TechCor, with revisited work in 2025–2026 (refactored MissionReader to use the `MasterVariant` schema). The community fork on this branch:
 
+- **Pluggable AI architecture** — `IBotPlayer` contract lets multiple AI implementations coexist. TechCor's reference AI lives in `MissionSDK/AI/` (frozen baseline), `MissionSDK/AIv2/` is the improvement playground, `MissionSDK/AI_Blank/` is a minimal template for community AI authors. Per-player AI selection via the new `"AIImpl"` field in the `.opm` JSON. See `AI_OVERVIEW.md`.
 - Restores buildability on modern Visual Studio
 - Adds robust JSON deserialization (`OnDeserializing` defaults across data classes)
 - Fixes the `.opm` path resolution (resolves relative to mission DLL - no more dual-deploy)
-- Adds per-bot diagnostic logging without changing AI behavior
+- Adds per-bot diagnostic logging without changing AI behavior, plus per-bot Status and Research snapshots written every Mark
 - Adds wall-clock-timestamped SDK lifecycle log (`MissionSDK.log`, append mode) and timestamps the existing Console.WriteLine log (`DotNetLog.txt`)
+- Per-bot logs dedup consecutive identical lines with a repeat counter (cuts log size ~10x in busy missions)
+- Fixes the `UnitEx_GetUnknownValue` P/Invoke crash that killed OP2 at ~25 min runtime
+- Adds HFL `Kids` / `Workers` / `Scientists` accessors (with the caveat documented in `ISSUES.md` that the underlying fields are slot capacities, not real population)
 - Broadcasts "Mission Ended" across all logs so events align across files
 - Updates the bundled `cTest.opm` to the new schema (and ships in the OPU `maps/<MissionName>/` convention)
 - Vendors HFL / OP2Helper / Outpost2DLL / odasl directly - no more submodules to manage
 
-See `CHANGES.md` for a complete fix-by-fix history.
+See `CHANGES.md` for a complete fix-by-fix history, `ISSUES.md` for the running list of known issues, and `AI_OVERVIEW.md` for an architectural tour of `BotPlayer`.
 
 ---
 
 ## Misc
 
 Original work by TechCor. See the [forum thread](https://forum.outpost2.net/index.php/topic,6245.0.html) for the project's origin story. This fork preserves attribution and seeks to keep the SDK accessible to the community.
+

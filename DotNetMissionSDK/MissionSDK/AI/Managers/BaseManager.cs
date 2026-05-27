@@ -45,7 +45,7 @@ namespace DotNetMissionSDK.AI.Managers
 
 		private bool m_IsProcessing;
 		private string m_DebugMessage = "None";
-		private string m_LastLoggedGoalString;     // dedupe "Top goals:" log line — only log on change
+		private string m_LastLoggedGoalString;     // dedupe "Top goals:" log line - only log on change
 
 		public BotPlayer botPlayer								{ get; private set; }
 		public int ownerID										{ get; private set; }
@@ -141,7 +141,7 @@ namespace DotNetMissionSDK.AI.Managers
 				// Get goals and perform goal tasks
 				List<Goal> goals = GetPrioritizedGoals(stateSnapshot);
 
-				// Log top 3 goals with importance — only when the line changes from the previous one,
+				// Log top 3 goals with importance - only when the line changes from the previous one,
 				// to avoid filling the log with thousands of identical entries during stable periods.
 				BotLog log = BotLog.Get(ownerID);
 				string topGoals = "";

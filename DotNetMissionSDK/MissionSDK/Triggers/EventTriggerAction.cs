@@ -69,7 +69,7 @@ namespace DotNetMissionSDK.Triggers
 			subjectType = actionData.GetSubjectType();
 		}
 
-		public EventTriggerActionResult Execute(EventSystem eventSystem, StateSnapshot stateSnapshot, BotPlayer[] botPlayers, int executionTick, int currentTick,
+		public EventTriggerActionResult Execute(EventSystem eventSystem, StateSnapshot stateSnapshot, IBotPlayer[] botPlayers, int executionTick, int currentTick,
 												PlayerState eventPlayer, UnitState eventUnit, int eventRegionIndex, int eventTopic)
 		{
 			switch (type)
@@ -203,8 +203,14 @@ namespace DotNetMissionSDK.Triggers
 					return EventTriggerActionResult.Complete;
 				
 				case TriggerActionType.SetPlayerBotType:                            // Set bot type for [CurrentPlayer/Player#] to [value]
+					// SetPlayerBotType only applies to the TechCor reference bot
+					// since BotType is its specific weight-table selector. Other
+					// IBotPlayer implementations silently ignore this trigger.
 					foreach (PlayerState player in GetPlayer(stateSnapshot, eventPlayer, subjectPlayer))
-						botPlayers[player.playerID].botType = (BotType)value;
+					{
+						if (botPlayers[player.playerID] is BotPlayer tcBot)
+							tcBot.botType = (BotType)value;
+					}
 
 					return EventTriggerActionResult.Complete;
 

@@ -157,7 +157,7 @@ namespace DotNetMissionSDK.Triggers
 		/// <summary>
 		/// Should be called when the mission has finished initializing, regardless of whether it is a new game or saved game.
 		/// </summary>
-		public void StartMission(StateSnapshot startingSnapshot, BotPlayer[] botPlayers)
+		public void StartMission(StateSnapshot startingSnapshot, IBotPlayer[] botPlayers)
 		{
 			m_PrevSnapshot = startingSnapshot;
 

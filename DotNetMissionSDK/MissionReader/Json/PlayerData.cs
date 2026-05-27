@@ -11,6 +11,11 @@ namespace DotNetMissionReader
 		[DataMember(Name = "IsEden")]				public bool IsEden						{ get; set; }
 		[DataMember(Name = "IsHuman")]				public bool IsHuman						{ get; set; }
 		[DataMember(Name = "BotType")]				public string BotType					{ get; set; } = string.Empty;
+		// Optional. Selects which AI implementation to instantiate for this
+		// player slot. Empty or "TechCor" → reference BotPlayer. "AIv2" → the
+		// alternative implementation in MissionSDK/AIv2/. Default empty keeps
+		// every existing .opm file working unchanged.
+		[DataMember(Name = "AIImpl")]				public string AIImpl					{ get; set; } = string.Empty;
 		[DataMember(Name = "Color")]				public string Color						{ get; set; } = string.Empty;
 		[DataMember(Name = "Allies")]				public int[] Allies						{ get; set; }
 		[DataMember(Name = "Resources")]			public ResourceData Resources			{ get; set; }
@@ -20,6 +25,7 @@ namespace DotNetMissionReader
 		private void OnDeserializing(StreamingContext context)
 		{
 			BotType = string.Empty;
+			AIImpl = string.Empty;
 			Color = string.Empty;
 			Allies = new int[0];
 			Resources = new ResourceData();
@@ -182,6 +188,7 @@ namespace DotNetMissionReader
 			IsEden = clone.IsEden;
 			IsHuman = clone.IsHuman;
 			BotType = clone.BotType;
+			AIImpl = clone.AIImpl;
 			Color = clone.Color;
 			Allies = new int[clone.Allies.Length];
 			System.Array.Copy(clone.Allies, Allies, Allies.Length);
@@ -198,6 +205,7 @@ namespace DotNetMissionReader
 			IsEden = dataToConcat.IsEden;
 			IsHuman = dataToConcat.IsHuman;
 			BotType = dataToConcat.BotType;
+			AIImpl = dataToConcat.AIImpl;
 			Color = dataToConcat.Color;
 			Allies = new int[dataToConcat.Allies.Length];
 			System.Array.Copy(dataToConcat.Allies, Allies, Allies.Length);

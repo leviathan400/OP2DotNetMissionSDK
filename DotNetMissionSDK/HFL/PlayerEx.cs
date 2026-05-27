@@ -1,4 +1,4 @@
-using DotNetMissionSDK.Async;
+﻿using DotNetMissionSDK.Async;
 using System;
 using System.Runtime.InteropServices;
 
@@ -44,7 +44,7 @@ namespace DotNetMissionSDK.HFL
 		// Not sure what this does. If it's required for info to be updated, perhaps call in update loop?
 		public void RecalculateValues()									{ ThreadAssert.MainThreadRequired();	PlayerEx_RecalculateValues(playerID);									}
 
-		// Raw population fields — read from HFL's reverse-engineered playerArray struct.
+		// Raw population fields - read from HFL's reverse-engineered playerArray struct.
 		// Use these instead of player.Kids()/Workers()/Scientists() which return garbage
 		// (constant 256/4096/4096 in tested scenarios).
 		public int GetKids()											{ ThreadAssert.MainThreadRequired();	return PlayerEx_GetKids(playerID);										}
