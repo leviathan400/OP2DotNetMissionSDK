@@ -2,6 +2,10 @@
 
 Brought OP2DotNetMissionSDK from "won't load" to "human vs AI on `on6_01.map`, with full diagnostic logs". This document records every change, why it was needed, and what it unblocks.
 
+## Versioning
+
+TechCor's last upstream release was tagged **DotNetMissionSDK 2.0** on 2019-08-18 (commit `cff3f7e` on `TechCor8/OP2DotNetMissionSDK`, with the note *"AI has regressed. Fixes required."*). All work in this community fork (`leviathan400/OP2DotNetMissionSDK`) is **DotNetMissionSDK 3.0** — the in-game startup banner and the `CustomLogic.SDK_VERSION` constant both read `"DotNetMissionSDK 3.0"`. Bump that constant per release.
+
 ## Validation
 
 End-to-end test: cTest mission (Colony Game, Eden, 2 players) launches via OPULauncher, both AI bots are created (BotType=LaunchStarship for each), each builds a CommandCenter, top-level goal selection runs, and AI events fire ("Wreckage Discovered", etc.). Confirmed visually and via per-bot logs (`BotPlayer_0.txt`, `BotPlayer_1.txt`) showing top goals per cycle and DoBuild commands.

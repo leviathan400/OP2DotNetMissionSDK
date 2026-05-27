@@ -72,9 +72,11 @@ namespace DotNetMissionSDK
 		/// <summary>
 		/// Called when the mission has finished initializing, regardless of whether it is a new game or saved game.
 		/// </summary>
-		// SDK version string surfaced in-game on mission start and to the SDK log.
-		// Bump on every release.
-		public const string SDK_VERSION = "v0.3.0";
+		// SDK version surfaced in-game on mission start and to the SDK log.
+		// Bump on every release. Lineage: TechCor's last upstream tag was 2.0
+		// (2019-08-18, commit cff3f7e on TechCor8/OP2DotNetMissionSDK).
+		// The community fork (this repo) picks up at 3.0.
+		public const string SDK_VERSION = "3.0";
 
 		protected override void StartMission()
 		{
@@ -82,8 +84,8 @@ namespace DotNetMissionSDK
 
 			// Announce SDK version in the Communications panel so anyone watching
 			// a game can tell at a glance which build is running.
-			TethysGame.AddMessage(0, 0, "OP2DotNetMissionSDK " + SDK_VERSION, -1, 0);
-			Console.WriteLine("OP2DotNetMissionSDK " + SDK_VERSION);
+			TethysGame.AddMessage(0, 0, "DotNetMissionSDK " + SDK_VERSION, -1, 0);
+			Console.WriteLine("DotNetMissionSDK " + SDK_VERSION);
 
 			// *** Add custom start code here ***
 		}
