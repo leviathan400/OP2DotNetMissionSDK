@@ -136,6 +136,11 @@ namespace DotNetMissionSDK.Units
 
 		private void SetDebugMarker(LOCATION position)
 		{
+			// Toggle in CustomLogic.cs. Defaults true during AI development; mission authors
+			// shipping for end-users should set this false in their own CustomLogic.
+			if (!CustomLogic.showDebugVehicleMarkers)
+				return;
+
 			if (GetOwnerID() != TethysGame.LocalPlayer())
 				return;
 

@@ -1,59 +1,224 @@
 # OP2DotNetMissionSDK
-.Net Mission SDK for Outpost 2
 
+.NET Mission SDK for Outpost 2 — write Outpost 2 missions in C# or pure JSON instead of C++.
 
-## OVERVIEW
-DotNetMissionSDK is a project to move Outpost 2 scenario development from C++ to C#, and finally to JSON where it can be used in an external editor. The DotNetMissionSDK will contain common functionality that will be available through the JSON data file, such as "real AI" and custom triggers.
+Original author: **TechCor**.
+Community-maintained fork (this repo) keeps the SDK buildable and adds diagnostics.
 
-Forum thread [here](https://forum.outpost2.net/index.php/topic,6245.0.html).
+Forum thread: [OP2 Scenario Project](https://forum.outpost2.net/index.php/topic,6245.0.html).
 
+---
 
-## TECHNICAL OVERVIEW
-DotNetMissionSDK intentionally avoids the use of Windows COM. To do this, the project has to jump through a few hoops. Starting from the unmanaged scenario DLL called by Outpost 2, the DLL calls the managed C++ CLR project DLL, which in turn calls the Managed C# DotNetMissionSDK DLL, which then calls the Outpost 2 interface through the CLR project.
+## What this is
 
-The DLL flow looks like this:
-NativePlugin (cMissionName.dll) > DotNetInterop.dll > DotNetMissionSDK.dll (Mission Code and JSON reader) > DotNetInterop.dll > Outpost2.dll
+DotNetMissionSDK lets mission authors write Outpost 2 scenarios in **C#** (or pure JSON `.opm` files, no coding required). Notable features that have no equivalent in the original C++ SDK:
 
-### NativePlugin
-This contains the scenario details which can't be forwarded to the C# DLL due to how it is loaded at app startup.\
-It forwards Init, AIProc, and GetSaveRegions to the CLR.\
-Also forwards Attach to the CLR with the DLLs name for determining the JSON filename to call.
+- **Real AI** — `BotPlayer` plays under the same rules as a human, no cheating
+- **JSON Reader** — entire missions describable in a single `.opm` file
+- **BaseGenerator** — auto-creates a base from a unit list with distance hints
+- **Pathfinder** — wrap-aware A* with rule-based "closest valid tile" search
+- **PlayerCommandMap** — tracks command-center tubing connectivity per player
+- **StateSnapshot / GameState** — immutable per-tick snapshot + live game state, the foundation for deterministic multi-threaded AI work
+- **AsyncPump** — schedule work off-thread, run completion at a specific `TethysGame.Time()` — keeps lockstep multiplayer deterministic
 
-### DotNetInterop
-Contains Init, AIProc, GetSaveRegions and Attach interface for the NativePlugin and forwards them to the DotNetMissionSDK.\
-Forwards Outpost 2 DLL functions called from DotNetMissionSDK.
+---
 
-### DotNetMissionSDK
-Calls JSON MissionReader and executes all mission logic.\
-Calls DotNetInterop to interact with Outpost 2.
+## How the layers fit together
 
+The plugin chain Outpost 2 sees:
 
-## CREATING A NEW SCENARIO IN JSON
-If you want to avoid coding all together, copy the following files from the DotNetMissionSDK/Outpost2 subdirectory to your Outpost 2 directory:
+```
+Outpost2.exe
+  → <Mission>.dll               (NativeMissionSDK/NativePlugin/LevelMain.cpp)
+  → DotNetInterop.dll           (NativeMissionSDK/DotNetInterop — C++/CLI shim)
+  → DotNetMissionSDK_v0.dll     (the C# SDK — your mission logic + JSON reader)
+  → DotNetInterop.dll           (back out for OP2 API calls)
+  → Outpost2.dll
+```
 
-cTest.dll\
-DotNetInterop.dll\
-DotNetMissionSDK.dll\
-cTest.opm
+Per-tick order inside the .NET side (`DotNetMissionEntry.Update`): TriggerManager → AsyncPump completions → GameState refresh → StateSnapshot build → MissionLogic.Update.
 
-You can change the cTest.opm JSON file in any text editor.
+---
 
-At this time, to change mission details, you must open the dll in a hex editor and change the description, tech tree, mission type, etc. The number of bytes must not change or the indexes will be wrong and the DLL will not load!
-It may be easier to simply change those values in C++ and recompile.
-In the future, a scenario editor should be able to do this for you.
+## Building from source
 
-The name of the native plugin (cTest.dll) must match the name of the JSON file (cTest.opm). You can create multiple missions by changing these together.
+### Prerequisites
 
+- **Visual Studio 2022 or newer** with the *Desktop development with C++* workload (must include "C++/CLI support" component — DotNetInterop is a managed-C++ project)
+- **.NET SDK** with **.NET Framework 4.7.2 targeting pack** (for DotNetInterop) and **.NET Standard 2.0** (for the C# SDK — automatic with any recent dotnet SDK)
+- A working **Outpost 2 install** (any modern version; Outpost Universe community release recommended)
 
-## CREATING A NEW SCENARIO IN C#
-If you are a programmer, you can dive right into the C# code. There are few things to keep in mind.
+### Cloning
 
-Mission details are set in the NativePlugin.
+This repo is **fully self-contained** — no submodules. Just clone normally:
 
-To have the interop load your custom C# mission DLL, in NativePlugin.LevelMain.cpp, set USE_CUSTOM_DLL to true. This will make the interop load the C# DLL using the native plugin name as the base: {NativePluginName}\_DotNet.dll
+```cmd
+git clone https://github.com/leviathan400/OP2DotNetMissionSDK.git
+```
 
-For example: cTest.DLL (native) > DotNetInterop.dll > cTest_DotNet.dll
+`NativeMissionSDK/NativeSDK/` contains vendored copies of HFL, OP2Helper, Outpost2DLL, and odasl (formerly tracked as submodules of `OutpostUniverse/OP2MissionSDK`). HFL is no longer maintained upstream per its author, and the OP2MissionSDK V4.1.0 release the submodule pointed at pinned an HFL commit older than what `DotNetInterop/HFL/UnitEx.cpp` requires. Vendoring eliminates both problems.
 
+If you want to sync newer upstream versions of any of those libraries in the future, that's now a deliberate manual copy operation — not an automatic submodule update.
 
-## Native vs Managed SDK differences
-Triggers work differently compared to the native SDK. All triggers must be registered to the TriggerManager. TriggerManager will execute a C# event when a trigger has fired, passing in the TriggerStub that was returned when the trigger was created. This stub is how you identify the trigger that has fired.
+### Build command
+
+From the repo root (the directory containing `DotNetMissionSDK.sln`):
+
+```cmd
+:: First time only — restore NuGet packages
+MSBuild.exe DotNetMissionSDK.sln -t:Restore -p:Configuration=Release
+
+:: Build all projects
+MSBuild.exe DotNetMissionSDK.sln -p:Configuration=Release -p:PlatformToolset=v143 -m
+```
+
+The `-p:PlatformToolset=v143` override is **required**: the bundled HFL and Outpost2DLL submodule projects target the v141 (VS 2017) toolset, which isn't installed by default on modern Visual Studio.
+
+### Build outputs
+
+| File | Location | Role |
+|---|---|---|
+| `cTest.dll` | `Release\` | Mission native plugin (bundled demo) |
+| `DotNetInterop.dll` | `Release\` | Managed-C++ shim — shared across all missions |
+| `DotNetMissionSDK_v0.dll` | `DotNetMissionSDK\bin\Release\netstandard2.0\` | C# SDK — versioned, ships per-mission |
+| `cTest.opm` | `Outpost2\` | Mission data (JSON) |
+
+A post-build step also stages the artifacts into `Outpost2\` for convenience.
+
+---
+
+## Installing the demo mission
+
+The Outpost Universe (OPU) launcher scans `OPU/maps/` for mission folders, so the canonical layout is **one folder per mission**:
+
+```
+<OP2 install>\OPU\
+├── DotNetInterop.dll                  ← shared, one copy in OPU folder
+├── DotNetMissionSDK_v0.dll            ← shared SDK runtime (v0), one copy in OPU folder
+└── maps\cTest\
+    ├── cTest.dll                       ← mission native plugin
+    └── cTest.opm                       ← mission JSON
+```
+
+**Two shared DLLs**, both in the OPU folder:
+- `DotNetInterop.dll` — C++/CLI shim, loads when Outpost2.exe loads a .NET mission DLL
+- `DotNetMissionSDK_v0.dll` — versioned C# SDK runtime; every mission targeting SDK v0 uses this one copy
+
+**Mission folder is just 2 files**: the native plugin (`MissionName.dll`) and the JSON (`MissionName.opm`).
+
+The SDK resolves `DotNetMissionSDK_v0.dll` in priority order:
+1. **Mission folder** — bundled SDK takes precedence (lets a mission ship its own SDK version, e.g. a forked or pre-release one)
+2. **OPU folder** — shared SDK install (the standard install path, used by 1.4.2+)
+3. **OP2 install root** — legacy fallback
+
+So a mission can ship its own bundled SDK by including `DotNetMissionSDK_v0.dll` in its folder, OR rely on the shared one in OPU. Either works without code changes.
+
+To install:
+
+1. Copy `DotNetInterop.dll` and `DotNetMissionSDK_v0.dll` once into your `OPU\` folder
+2. Create `OPU\maps\cTest\` and drop `cTest.dll`, `cTest.opm` into it
+3. Launch via OPULauncher → pick a multiplayer or custom-game slot → script picker → select `cTest.dll`
+
+(For a clean OPU 1.4.2+ install, both shared DLLs will ship pre-installed in the OPU folder — you only need step 2.)
+
+The bundled `cTest` demo is a Colony Game pitting a human Eden player against a LaunchStarship-personality Plymouth AI on map `on6_01.map`.
+
+---
+
+## Creating a new scenario — JSON only (no C#)
+
+For non-programmers. Make a copy of the cTest folder and rename:
+
+```
+OPU\maps\MyMission\
+├── MyMission.dll
+├── MyMission.opm
+└── DotNetMissionSDK_v0.dll
+```
+
+The native plugin DLL is currently mission-specific because it has metadata baked in. Until a mission-editor tool exists, you'll need to **rebuild the native plugin** with your own values — see *Creating a new scenario — C#* below for the build step, but the only edits required are in `LevelMain.cpp` and the `.opm`.
+
+The `.opm` JSON top-level structure:
+
+```jsonc
+{
+  "LevelDetails": { /* description, map, tech tree, mission type, player count */ },
+  "MasterVariant": {
+    "TethysGame": { /* beacons, markers, wreckage, music, daylight */ },
+    "Players":    [ /* per-player config: faction, color, BotType, starting units */ ],
+    "AutoLayouts": [ /* optional procedural base layouts */ ]
+  },
+  "Disasters": [ /* meteor / quake / storm / vortex / volcano */ ],
+  "Triggers":  [ /* native OP2 trigger definitions */ ]
+}
+```
+
+Each `Players[]` entry has:
+- `ID`, `IsHuman`, `IsEden`, `Color`, `Allies`
+- `BotType` — `None` for a human, or one of: `PopulationGrowth`, `LaunchStarship`, `EconomicGrowth`, `Passive`, `Defender`, `Balanced`, `Aggressive`, `Harassment`, `Wreckless`
+- `Resources` — sub-object containing `TechLevel`, `MoraleLevel`, `Kids`, `Workers`, `Scientists`, `CommonOre`, `RareOre`, `Food`, `SolarSatellites`, `CompletedResearch`, `Units`, `WallTubes`
+
+Use the bundled `Outpost2\cTest.opm` as a reference.
+
+**Save the `.opm` as UTF-8 *without* BOM.** `DataContractJsonSerializer` rejects the BOM with `Encountered unexpected character 'ï'`. PowerShell's `Set-Content -Encoding UTF8` writes a BOM — use `[System.IO.File]::WriteAllText(path, content, [System.Text.UTF8Encoding]::new($false))` instead.
+
+---
+
+## Creating a new scenario — C#
+
+For programmers who want logic beyond what the JSON trigger system can express.
+
+1. Edit `NativeMissionSDK\NativePlugin\NativePlugin.vcxproj` and change `<TargetName>cTest</TargetName>` to your mission name (two occurrences — once per build configuration).
+2. Edit `NativeMissionSDK\NativePlugin\LevelMain.cpp`:
+   - Change the `ExportLevelDetailsEx(...)` parameters (description, map, tech tree, mission type, player count, max tech level, unit-only flag)
+   - Optionally change `SdkPath` if you ship your own C# DLL
+3. Edit `DotNetMissionSDK\CustomLogic.cs` to add per-mission logic. Override `InitializeNewMission`, `Update`, `OnTriggerExecuted`, etc.
+4. Build (`MSBuild.exe DotNetMissionSDK.sln -p:Configuration=Release -p:PlatformToolset=v143 -m`).
+5. Deploy the resulting files into `OPU\maps\<MyMission>\`.
+
+For multiple custom missions in parallel: duplicate `NativePlugin.vcxproj` per mission so they can build side-by-side.
+
+---
+
+## Diagnostic logs
+
+When a mission runs, the SDK writes four logs into Outpost 2's working directory (typically `OPU\`):
+
+| File | Mode | Purpose |
+|---|---|---|
+| `MissionSDK.log` | append | SDK lifecycle history (DLL load, attach, init, detach) — persists across runs |
+| `DotNetLog.txt` | overwrite | Every `Console.WriteLine` from C# code, with wall-clock timestamps |
+| `BotPlayer_<N>.txt` | overwrite | Per-AI behavior trace: top goals each cycle, build attempts, failures |
+| `Outpost2Log.txt` | overwrite | OP2's own native log (separate from this SDK) |
+
+All SDK-side logs use ISO-8601 wall-clock timestamps. The bot logs additionally include game-tick prefixes so events can be correlated with `TethysGame.Time()`.
+
+---
+
+## Differences from the native OP2MissionSDK
+
+- **Triggers** are registered to a C# `TriggerManager`. When a trigger fires, the manager raises an event with the corresponding `TriggerStub`; the `id` field on the stub identifies which trigger fired. See `MissionSDK/TriggerManager.cs` and `MissionReader/Json/Triggers/`.
+- **Threading** — AI work runs on AsyncPump worker threads using immutable `StateSnapshot` reads. The completion callback fires back on the main thread at a deterministic `TethysGame.Time()`, where `GameState` can be safely mutated. Don't touch `GameState` from worker threads.
+
+---
+
+## Status & maintenance
+
+This is the active community fork. Original development was 2019–2020 by TechCor, with revisited work in 2025–2026 (refactored MissionReader to use the `MasterVariant` schema). The community fork on this branch:
+
+- Restores buildability on modern Visual Studio
+- Adds robust JSON deserialization (`OnDeserializing` defaults across data classes)
+- Fixes the `.opm` path resolution (resolves relative to mission DLL — no more dual-deploy)
+- Adds per-bot diagnostic logging without changing AI behavior
+- Adds wall-clock-timestamped SDK lifecycle log (`MissionSDK.log`, append mode) and timestamps the existing Console.WriteLine log (`DotNetLog.txt`)
+- Broadcasts "Mission Ended" across all logs so events align across files
+- Updates the bundled `cTest.opm` to the new schema (and ships in the OPU `maps/<MissionName>/` convention)
+- Vendors HFL / OP2Helper / Outpost2DLL / odasl directly — no more submodules to manage
+
+See `CHANGES.md` for a complete fix-by-fix history.
+
+---
+
+## License & credit
+
+Original work © TechCor. See the [forum thread](https://forum.outpost2.net/index.php/topic,6245.0.html) for the project's origin story. This fork preserves attribution and seeks to keep the SDK accessible to the community.

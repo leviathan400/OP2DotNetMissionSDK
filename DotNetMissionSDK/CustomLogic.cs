@@ -18,6 +18,17 @@ namespace DotNetMissionSDK
 		public const bool useJson = true;
 
 		/// <summary>
+		/// If true, AI-controlled vehicles place a DNA-shaped marker at their destination tile
+		/// whenever they receive a path-based move command (see Vehicle.SetDebugMarker).
+		/// Markers update every time the AI re-plans a vehicle's destination — useful for
+		/// visualizing what the AI is trying to do. Markers only appear for the local player.
+		///
+		/// Set to false for shipped missions to give players a clean view.
+		/// Set to true during AI development / mission debugging.
+		/// </summary>
+		public const bool showDebugVehicleMarkers = true;
+
+		/// <summary>
 		/// Called when the mission is first loaded, regardless of whether it is a new game or saved game.
 		/// </summary>
 		/// <param name="root">The filled JSON data root.</param>

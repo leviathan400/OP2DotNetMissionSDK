@@ -435,4 +435,28 @@ extern "C"
 
 		unit.SetLabScientistCount(numScientists);
 	}
+
+	// UnitEx_GetUnknownValue / UnitEx_SetUnknownValue —
+	// The C# side (DotNetMissionSDK_v0.dll, HFL/UnitEx.cs) declares P/Invokes for these
+	// and uses them in DoTransferLaunchpadCargo (and VarDump) to access offset 46 of OP2's
+	// internal unit struct. The HFL native library has no equivalent accessor — TechCor
+	// reverse-engineered the offset and added the C# binding but never implemented the
+	// native side, so the import threw EntryPointNotFoundException as soon as the AI
+	// reached the starship-module-deployment phase, crashing OP2 (~25 min into a Colony
+	// game in cTest, 2026-05-27).
+	//
+	// These are STUBS to prevent the crash. Get returns 0; Set is a no-op. The launchpad
+	// cargo transfer logic in DoTransferLaunchpadCargo becomes effectively a no-op, which
+	// means the AI's LaunchStarship goal won't actually load modules onto the pad — but
+	// the game survives instead of crashing. Properly implementing these requires either
+	// (a) finding the right HFL/OP2DLL accessor for offset 46 and forwarding to it, or
+	// (b) reading/writing the raw memory at that offset directly (OP2 unit struct layout).
+	extern EXPORT int __stdcall UnitEx_GetUnknownValue(int unitID, int index)
+	{
+		return 0;
+	}
+	extern EXPORT void __stdcall UnitEx_SetUnknownValue(int unitID, int index, int value)
+	{
+		// no-op
+	}
 }

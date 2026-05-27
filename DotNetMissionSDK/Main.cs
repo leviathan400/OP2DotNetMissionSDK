@@ -171,26 +171,48 @@ namespace DotNetMissionSDK
 		/// </summary>
 		public void Update()
 		{
-			// Load the save buffer if it isn't loaded
-			if (!m_SaveBuffer.isLoaded)
+			// Wrap the whole per-tick body so a C# exception can't propagate through the C++/CLI
+			// shim into native OP2 (which crashes on managed exceptions). On any unhandled exception
+			// we log it and let OP2 continue ticking — far better than a hard crash with no info.
+			try
 			{
-				InitializeSystems();
-				m_MissionLogic.LoadMission();
+				// Load the save buffer if it isn't loaded
+				if (!m_SaveBuffer.isLoaded)
+				{
+					InitializeSystems();
+					m_MissionLogic.LoadMission();
+				}
+
+				// Update essential systems
+				m_Triggers.Update();
+				AsyncPump.Update();
+				GameState.Update();
+				StateSnapshot stateSnapshot = StateSnapshot.Create();
+
+				try
+				{
+					// Update mission logic
+					m_MissionLogic.Update(stateSnapshot);
+				}
+				finally
+				{
+					// Always release the snapshot to avoid pool leaks even if Update threw.
+					stateSnapshot.Release();
+				}
+
+				// Update save buffer
+				m_SaveBuffer.Save();
 			}
-
-			// Update essential systems
-			m_Triggers.Update();
-			AsyncPump.Update();
-			GameState.Update();
-			StateSnapshot stateSnapshot = StateSnapshot.Create();
-			
-			// Update mission logic
-			m_MissionLogic.Update(stateSnapshot);
-
-			stateSnapshot.Release();
-
-			// Update save buffer
-			m_SaveBuffer.Save();
+			catch (Exception ex)
+			{
+				Console.WriteLine("EXCEPTION during Update tick:");
+				Console.WriteLine(ex.ToString());
+				try
+				{
+					MissionSdkLog.Write("EXCEPTION during Update: " + ex.GetType().Name + ": " + ex.Message + " | " + ex.StackTrace);
+				}
+				catch { }
+			}
 		}
 
 		/// <summary>
