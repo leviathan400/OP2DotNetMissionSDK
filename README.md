@@ -182,16 +182,25 @@ For multiple custom missions in parallel: duplicate `NativePlugin.vcxproj` per m
 
 ## Diagnostic logs
 
-When a mission runs, the SDK writes four logs into Outpost 2's working directory (typically `OPU\`):
+When a mission runs, the SDK writes its logs into a `logs/` subfolder of Outpost 2's working directory — for an OPU install that's `OPU\logs\`. The `logs/` folder is created automatically on mission start.
 
-| File | Mode | Purpose |
-|---|---|---|
-| `MissionSDK.log` | append | SDK lifecycle history (DLL load, attach, init, detach) — persists across runs |
-| `DotNetLog.txt` | overwrite | Every `Console.WriteLine` from C# code, with wall-clock timestamps |
-| `BotPlayer_<N>.txt` | overwrite | Per-AI behavior trace: top goals each cycle, build attempts, failures |
-| `Outpost2Log.txt` | overwrite | OP2's own native log (separate from this SDK) |
+| File | Location | Mode | Purpose |
+|---|---|---|---|
+| `MissionSDK.log` | `OPU\logs\` | **append** | SDK lifecycle history (DLL load, attach, init, detach) — persists across runs so you can see every mission run in one file |
+| `DotNetLog.txt` | `OPU\logs\` | overwrite | Every `Console.WriteLine` from C# code, wall-clock-timestamped (one timestamp per line, multi-line exception traces stay readable) |
+| `BotPlayer_<N>.txt` | `OPU\logs\` | overwrite | Per-AI behavior trace: top goals each cycle, build attempts, exceptions caught during Update. One file per bot owner ID. |
+| `Outpost2Log.txt` | `OPU\` | overwrite | OP2's own native log (separate from this SDK; stays at OPU root) |
 
-All SDK-side logs use ISO-8601 wall-clock timestamps. The bot logs additionally include game-tick prefixes so events can be correlated with `TethysGame.Time()`.
+**Bot log line format**: `[HH:mm:ss.fff t=N] <message>` — wall-clock time-of-day plus game tick, so events can be correlated both with real-world events and with `TethysGame.Time()` references in code.
+
+**Dedup**: bot logs suppress identical consecutive messages with a `(last message repeated Nx)` summary line. Catches rapid-fire bursts (e.g. multiple goals' BuildStructureTask instances all logging the same "convec busy" line within milliseconds).
+
+**Useful greps:**
+- `grep "issuing DoBuild" BotPlayer_*.txt` — every build the AI actually issued
+- `grep "EXCEPTION" *.txt` — any C# exceptions caught by the Update try/catch (if this returns anything, we want to know)
+- `grep "Top goals" BotPlayer_*.txt` — every distinct goal state the bot was in
+
+**On crashes**: if OP2 crashes hard (not a clean exit), `MissionSDK.log` will lack a `Detach: begin` / `Detach: complete` pair — that's how you tell a crash from a normal mission end. For native OP2 crashes, see also `%LOCALAPPDATA%\CrashDumps\` if you have Windows LocalDumps configured for `Outpost2.exe`.
 
 ---
 
