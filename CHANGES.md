@@ -293,3 +293,16 @@ The bot exercises a chunk of SDK surface area that wasn't covered by the existin
 - `ClearDeployArea` pattern - issue `DoMove` to friendly vehicles inside the proposed footprint before `DoBuild` so OP2 accepts the deploy
 
 The folder was originally named `TestAI` in early iterations; renamed to `AI_Test` so the four AI folders share a consistent naming pattern (`AI/`, `AIv2/`, `AI_Test/`, `AI_Blank/`). Factory dispatch in `MissionLogic.StartMission` updated, `.opm` `AIImpl` value updated, all docs updated.
+
+## MissionContext + StartingMode plumbing - 2026-05-27 (late session)
+
+Added a mission-wide context object that every `IBotPlayer` receives at construction so AI implementations can branch on what kind of game they're playing.
+
+- New `MissionSDK/AI/MissionContext.cs` POCO with `startingMode`, `missionType`, `numPlayers`, `maxTechLevel`. Read-only after construction.
+- New `StartingMode` enum: `LandRush` (kit-loaded convecs, no base) and `LastOneStanding` (fully-built base on tick 0).
+- New `protected virtual StartingMode GetStartingMode()` on `MissionLogic`, defaults to `LandRush`. `CustomLogic` overrides for per-mission declarations.
+- `StartingMode` lives in C# mission code, **not** in the `.opm`. The `.opm` is data-only - OP2MissionEditor produces those files and adding fields means coordinating with that tool. C# code is the natural place for strategic intent.
+- All four `BotPlayer` constructors (`AI/`, `AIv2/`, `AI_Test/`, `AI_Blank/`) updated to accept an optional `MissionContext context = null` and store it on a public `context` property.
+- `MissionLogic.StartMission` builds the context once and passes it to every bot via the factory dispatch.
+- Bot construct log line now includes `startingMode=LandRush` or `startingMode=LastOneStanding` so you can see at a glance what each bot was told. Mission init writes the full context to `MissionSDK.log`.
+- **No AI-side branching yet** - every bot stores the context as dead-storage. When we ship a LastOneStanding mission and want bots to skip the deploy-convecs phase, that's where the branching gets added (each bot reads `this.context.startingMode`).

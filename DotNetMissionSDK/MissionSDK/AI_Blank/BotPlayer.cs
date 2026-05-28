@@ -21,17 +21,20 @@ namespace DotNetMissionSDK.AI_Blank
 		public BotType botType	{ get; set; }
 		public int playerID							{ get; private set; }
 		public bool isActive						{ get; private set; }
+		public MissionContext context				{ get; private set; }
 
 		private const int HEARTBEAT_INTERVAL_TICKS = 100;
 
-		public BotPlayer(BotType botType, int playerToControlID)
+		public BotPlayer(BotType botType, int playerToControlID, MissionContext context = null)
 		{
 			ThreadAssert.MainThreadRequired();
 
 			this.botType = botType;
 			this.playerID = playerToControlID;
+			this.context = context;
 
-			BotLog.Get(playerToControlID).Write(TethysGame.Time(), "AI_Blank construct: type=" + botType);
+			BotLog.Get(playerToControlID).Write(TethysGame.Time(),
+				"AI_Blank construct: type=" + botType + " startingMode=" + (context?.startingMode.ToString() ?? "?"));
 		}
 
 		public void Start()

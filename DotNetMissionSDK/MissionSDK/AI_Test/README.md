@@ -92,3 +92,6 @@ MissionSDK/AI_Test/
 
 Class: `DotNetMissionSDK.AI_Test.BotPlayer : DotNetMissionSDK.AI.IBotPlayer`
 
+## MissionContext
+
+Like every bot in the SDK, AI_Test's constructor accepts a `MissionContext` and stores it on the public `context` property. Currently AI_Test does **not** branch on `context.startingMode` - it assumes `LandRush` and deploys convecs unconditionally. For a `LastOneStanding` mission you'd want to skip the deploy phase entirely; that's a ~5-line change in `Update` to short-circuit `TryDeployOneConvec` when `context?.startingMode == StartingMode.LastOneStanding`.

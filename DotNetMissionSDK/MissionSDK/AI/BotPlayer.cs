@@ -45,20 +45,29 @@ namespace DotNetMissionSDK.AI
 
 		public int playerID						{ get; private set; }		// OP2 player slot this bot controls
 		public bool isActive						{ get; private set; }		// Is the bot controlling the player?
+		public MissionContext context			{ get; private set; }		// Mission-wide context (StartingMode, etc.)
+
+		// Wall-clock time when this bot was constructed. Surfaced in
+		// BotPlayer_<N>_Status.txt as "Current Runtime" so you can correlate
+		// the bot's state with how long the mission has been running without
+		// flipping back to MissionSDK.log timestamps.
+		private readonly DateTime m_ConstructionWallTime = DateTime.Now;
 
 		// How often to write the status snapshot (in game ticks).
 		// At ~10 ticks/sec, 100 ticks ≈ 10 seconds of game time.
 		private const int STATUS_WRITE_INTERVAL_TICKS = 100;
 
 
-		public BotPlayer(BotType botType, int playerToControlID)
+		public BotPlayer(BotType botType, int playerToControlID, MissionContext context = null)
 		{
 			ThreadAssert.MainThreadRequired();
 
 			this.botType = botType;
 			this.playerID = playerToControlID;
+			this.context = context;
 
-			BotLog.Get(playerToControlID).Write(TethysGame.Time(), "BotPlayer construct: type=" + botType);
+			BotLog.Get(playerToControlID).Write(TethysGame.Time(),
+				"BotPlayer construct: type=" + botType + " startingMode=" + (context?.startingMode.ToString() ?? "?"));
 
 			baseManager = new BaseManager(this, playerToControlID);
 			laborManager = new LaborManager(this, playerToControlID);
@@ -98,11 +107,15 @@ namespace DotNetMissionSDK.AI
 		}
 
 		// Writes a human-readable snapshot of this bot's player state to
-		// logs/BotPlayer_<N>_Status.txt. Overwrite each call (FileMode.Create implicit
+		// logs/BotPlayer_<N>_Status.txt. Skipped when BotLog.Enabled is false so the
+		// per-bot log family stays a single toggle. Overwrite each call (FileMode.Create implicit
 		// via File.WriteAllText). Swallows IO exceptions - status writing failure must
 		// never crash the bot.
 		private void WriteStatus(StateSnapshot stateSnapshot)
 		{
+			if (!BotLog.Enabled)
+				return;
+
 			try
 			{
 				if (playerID < 0 || playerID >= stateSnapshot.players.Count)
@@ -115,8 +128,11 @@ namespace DotNetMissionSDK.AI
 				StringBuilder sb = new StringBuilder(4096);
 				string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
+				TimeSpan runtime = DateTime.Now - m_ConstructionWallTime;
+				string runtimeStr = ((int)runtime.TotalMinutes).ToString() + "m " + runtime.Seconds.ToString("D2") + "s";
 				sb.AppendLine("# BotPlayer " + playerID + " Status - " + botType + (p.isEden ? " (Eden)" : " (Plymouth)"));
-				sb.AppendLine("# Updated " + stamp + " | tick=" + stateSnapshot.time);
+				sb.AppendLine("# Updated " + stamp + " | tick=" + stateSnapshot.time + " (Mark " + (stateSnapshot.time / 100) + ")");
+				sb.AppendLine("# Current Runtime: " + runtimeStr);
 				sb.AppendLine();
 
 				sb.AppendLine("RESOURCES");
@@ -249,6 +265,9 @@ namespace DotNetMissionSDK.AI
 		// Overwrites each call. Swallows IO exceptions.
 		private void WriteResearchStatus(StateSnapshot stateSnapshot)
 		{
+			if (!BotLog.Enabled)
+				return;
+
 			try
 			{
 				if (playerID < 0 || playerID >= stateSnapshot.players.Count)

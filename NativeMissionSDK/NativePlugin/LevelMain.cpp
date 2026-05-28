@@ -24,7 +24,7 @@
 //   MaxTechLevel  — 0–13, caps research progression
 //   UnitOnlyMission — true = morale/colony disabled, false = full game
 // --------------------------------------------------------------------
-ExportLevelDetailsEx("Colony Game, Eden", "on6_01.map", "MULTITEK.TXT", Colony, 3, 12, false)
+ExportLevelDetailsEx("Colony Game, Eden", "on6_01.map", "MULTITEK.TXT", Colony, 2, 12, false)
 
 // SdkPath: the C# DLL that contains the mission logic. For most missions
 // using JSON .opm files, leave this as the shared DotNetMissionSDK_v0.dll.
@@ -91,8 +91,15 @@ Export void AIProc()
 //		 any special callback function.
 // Note: The use of Export is used by all trigger functions
 //		 to ensure they are exported correctly.
+// Note: The volatile sink prevents the linker's identical-COMDAT-folding
+//		 (/OPT:ICF) from merging this empty function with a CFG stub
+//		 (`@_guard_check_icall_nop@4`). When that fold happens OP2 calls
+//		 the CFG stub via cdecl but it's __fastcall, blowing the stack
+//		 and crashing ~10s into the mission with no log output.
 Export void NoResponseToTrigger()
 {
+	static volatile int s_NoResponseSink = 0;
+	s_NoResponseSink++;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)

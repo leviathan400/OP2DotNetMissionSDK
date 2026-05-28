@@ -106,6 +106,39 @@ namespace DotNetMissionSDK.AIv2.Managers
 			unassignedUnits.AddRange(owner.units.spiders);
 			unassignedUnits.AddRange(owner.units.scorpions);
 
+			// AIv2 extension: exclude units currently on attack-wave duty.
+			// BotPlayer.activeAttackers contains unit IDs the bot wants
+			// pushed toward an enemy CC. If we leave them in this list,
+			// VehicleGroup will issue DoMove(defensive_position) and override
+			// our DoAttack every tick. Wrapped because this runs on the
+			// AsyncPump worker thread - HashSet isn't thread-safe so a
+			// concurrent main-thread mutation could corrupt the read here.
+			// Logged failure is safer than a silently-stuck BaseManager.
+			try
+			{
+				var attackers = botPlayer.activeAttackers;
+				if (attackers != null && attackers.Count > 0)
+				{
+					// Snapshot the set into a local array first so we don't
+					// iterate a structure that's potentially being mutated.
+					int[] excluded;
+					lock (attackers)
+					{
+						excluded = new int[attackers.Count];
+						attackers.CopyTo(excluded);
+					}
+					System.Collections.Generic.HashSet<int> excludeSet = new System.Collections.Generic.HashSet<int>(excluded);
+					unassignedUnits.RemoveAll(u => excludeSet.Contains(u.unitID));
+				}
+			}
+			catch (System.Exception ex)
+			{
+				// Worker thread - can't call TethysGame.Time(). Pass -1 sentinel.
+				DotNetMissionSDK.AI.BotLog.Get(ownerID).Write(-1,
+					"AIv2 PopulateCombatGroups exclude FAILED: " + ex.GetType().Name + ": " + ex.Message);
+				// Fall through with the unfiltered list - safer than killing the bot
+			}
+
 			// Units already in an active combat zone must be assigned to that zone
 			for (int i=0; i < unassignedUnits.Count; ++i)
 			{

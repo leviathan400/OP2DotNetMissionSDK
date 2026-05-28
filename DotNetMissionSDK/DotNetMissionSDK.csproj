@@ -3,6 +3,16 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>DotNetMissionSDK_v0</AssemblyName>
+
+    <!-- Version stamps for Explorer's Properties dialog. The
+         IncludeSourceRevisionInInformationalVersion=false flag suppresses
+         Microsoft.NET.Sdk's auto-appended +<gitHash> on ProductVersion. -->
+    <Version>3.0.0.0</Version>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
+    <FileVersion>3.0.0.0</FileVersion>
+    <InformationalVersion>3.0.0.0</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Copyright>Outpost Universe</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

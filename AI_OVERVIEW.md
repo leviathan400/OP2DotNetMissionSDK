@@ -39,6 +39,40 @@ DotNetMissionSDK/MissionSDK/
 
 The interface itself is tiny — `Start()`, `Stop()`, `Update(StateSnapshot)`, plus `playerID` and `isActive` properties. Anything beyond that is each implementation's choice.
 
+### MissionContext: telling the AI what kind of game it's in
+
+Every bot constructor accepts an optional [`MissionContext`](DotNetMissionSDK/MissionSDK/AI/MissionContext.cs) (built once in `MissionLogic.StartMission`). It carries mission-wide info the AI may want to branch on:
+
+```csharp
+public class MissionContext
+{
+    public StartingMode startingMode  { get; }  // LandRush or LastOneStanding
+    public string missionType         { get; }  // "Colony", "MultiLandRush", etc.
+    public int numPlayers             { get; }
+    public int maxTechLevel           { get; }
+}
+
+public enum StartingMode
+{
+    LandRush,        // players start with kit-loaded convecs, no buildings
+    LastOneStanding  // players start with a fully-built base
+}
+```
+
+`StartingMode` is declared in the mission's **C# code**, not the `.opm` (the `.opm` is data-only; OP2MissionEditor produces those files and we don't want to extend its schema). The default value is `LandRush`. To change it, override `GetStartingMode()` in your `CustomLogic` subclass:
+
+```csharp
+public class CustomLogic : MissionLogic
+{
+    protected override DotNetMissionSDK.AI.StartingMode GetStartingMode()
+    {
+        return DotNetMissionSDK.AI.StartingMode.LastOneStanding;
+    }
+}
+```
+
+Each bot stores the context as a public `context` property and can read `this.context.startingMode` in `Update`. None of the existing AIs branch on it yet — it's plumbed but not consumed. When you write a "skip the deploy phase, jump straight to military" or "rush the spaceport instead of building economy" variant, that's where you'd read it.
+
 ### Selecting which AI to run
 
 In the mission `.opm`, add an optional `AIImpl` field to each player. The factory in [`MissionLogic.StartMission`](DotNetMissionSDK/MissionSDK/MissionLogic.cs) dispatches on it:

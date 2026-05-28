@@ -49,6 +49,11 @@ namespace DotNetMissionSDK.AI
 
 		public static void WriteAll(int playerID, StateSnapshot snap)
 		{
+			// Gate on the same master switch as BotLog - BotPlayer_<N>_*.txt
+			// files are the per-bot trace family and travel together.
+			if (!BotLog.Enabled)
+				return;
+
 			try
 			{
 				if (playerID < 0 || playerID >= snap.players.Count)

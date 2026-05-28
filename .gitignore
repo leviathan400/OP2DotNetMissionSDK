@@ -328,3 +328,15 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Build artifacts staged in Outpost2/ by post-build copy
+Outpost2/*.dll
+
+# Local dev tooling — deploy/test scripts and layout notes
+# (not part of the SDK build; live in repo root for convenience)
+*.ps1
+DEPLOY-LAYOUTS.md
+
+# Stray native build post-step output (DotNetInterop's PostBuildEvent
+# copies the .dll into this folder; not tracked).
+NativeMissionSDK/DotNetInterop/Outpost2/

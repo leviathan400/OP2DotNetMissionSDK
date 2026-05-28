@@ -243,3 +243,5 @@ See `CHANGES.md` for a complete fix-by-fix history, `ISSUES.md` for the running 
 
 Original work by TechCor. See the [forum thread](https://forum.outpost2.net/index.php/topic,6245.0.html) for the project's origin story. This fork preserves attribution and seeks to keep the SDK accessible to the community.
 
+[![Video AI Demo](https://i3.ytimg.com/vi/-LvTZeNePBQ/hqdefault.jpg)](https://www.youtube.com/watch?v=-LvTZeNePBQ)
+

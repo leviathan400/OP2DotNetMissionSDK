@@ -46,7 +46,7 @@ namespace DotNetMissionSDK.AIv2.Managers
 
 		private bool m_IsProcessing;
 		private string m_DebugMessage = "None";
-		private string m_LastLoggedGoalString;     // dedupe "Top goals:" log line â€” only log on change
+		private string m_LastLoggedGoalString;     // dedupe "Top goals:" log line - only log on change
 
 		public BotPlayer botPlayer								{ get; private set; }
 		public int ownerID										{ get; private set; }
@@ -96,7 +96,7 @@ namespace DotNetMissionSDK.AIv2.Managers
 				case BotType.LaunchStarship:
 					SetWeight<LaunchStarshipGoal>(1.1f);
 					SetWeight<MaintainResearchGoal>(1.05f);
-					SetWeight<MaintainArmyGoal>(0.8f);
+					SetWeight<MaintainArmyGoal>(1.15f);   // was 0.8, then 1.4 (froze bot). 1.15 is moderate - more Lynx without blocking other goals
 					SetWeight<MaintainDefenseGoal>(0.8f);
 					break;
 				case BotType.Aggressive:
@@ -176,7 +176,7 @@ namespace DotNetMissionSDK.AIv2.Managers
 				// Get goals and perform goal tasks
 				List<Goal> goals = GetPrioritizedGoals(stateSnapshot);
 
-				// Log top 3 goals with importance â€” only when the line changes from the previous one,
+				// Log top 3 goals with importance - only when the line changes from the previous one,
 				// to avoid filling the log with thousands of identical entries during stable periods.
 				BotLog log = BotLog.Get(ownerID);
 				string topGoals = "";

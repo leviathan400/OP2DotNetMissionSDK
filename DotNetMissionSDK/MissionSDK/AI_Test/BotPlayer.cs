@@ -35,6 +35,7 @@ namespace DotNetMissionSDK.AI_Test
 		public BotType botType					{ get; set; }
 		public int playerID						{ get; private set; }
 		public bool isActive					{ get; private set; }
+		public MissionContext context			{ get; private set; }
 
 		// Tick throttling. We only consider issuing new commands every
 		// ACTION_INTERVAL_TICKS to avoid spamming OP2's command queue.
@@ -63,12 +64,14 @@ namespace DotNetMissionSDK.AI_Test
 		private const int PER_TILE_BUILD_CLAIM_TICKS = 500;
 
 
-		public BotPlayer(BotType botType, int playerToControlID)
+		public BotPlayer(BotType botType, int playerToControlID, MissionContext context = null)
 		{
 			ThreadAssert.MainThreadRequired();
 			this.botType = botType;
 			this.playerID = playerToControlID;
-			BotLog.Get(playerToControlID).Write(TethysGame.Time(), "AI_Test construct: type=" + botType);
+			this.context = context;
+			BotLog.Get(playerToControlID).Write(TethysGame.Time(),
+				"AI_Test construct: type=" + botType + " startingMode=" + (context?.startingMode.ToString() ?? "?"));
 		}
 
 		public void Start()

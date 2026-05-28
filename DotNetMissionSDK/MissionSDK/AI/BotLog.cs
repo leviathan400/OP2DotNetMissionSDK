@@ -10,6 +10,12 @@ namespace DotNetMissionSDK.AI
 	/// </summary>
 	public class BotLog
 	{
+		// Master switch for the per-bot BotPlayer_<N>*.txt log family.
+		// Mission-wide MissionSDK.log and DotNetLog.txt are NOT affected -
+		// they're always written. Set to true in CustomLogic before the
+		// first bot is constructed if you want the verbose per-bot trace.
+		public static bool Enabled = false;
+
 		private static readonly object s_InstancesLock = new object();
 		private static readonly Dictionary<int, BotLog> s_Instances = new Dictionary<int, BotLog>();
 
@@ -54,6 +60,13 @@ namespace DotNetMissionSDK.AI
 		private BotLog(int ownerID)
 		{
 			this.ownerID = ownerID;
+
+			// When per-bot logs are disabled, the instance still exists so callers
+			// can call Get(...).Write(...) without null checks - Write is a no-op
+			// when m_Writer is null.
+			if (!Enabled)
+				return;
+
 			try
 			{
 				Directory.CreateDirectory("logs");

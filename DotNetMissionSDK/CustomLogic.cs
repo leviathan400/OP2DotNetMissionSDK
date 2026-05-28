@@ -1,4 +1,5 @@
 ﻿using DotNetMissionReader;
+using DotNetMissionSDK.AI;
 using DotNetMissionSDK.State.Snapshot;
 using DotNetMissionSDK.Triggers;
 using System;
@@ -34,8 +35,27 @@ namespace DotNetMissionSDK
 		/// <param name="root">The filled JSON data root.</param>
 		/// <param name="saveData">The save data class.</param>
 		/// <param name="triggerManager">The trigger manager used for the mission.</param>
+		/// <summary>
+		/// Master switch for the per-bot BotPlayer_&lt;N&gt;*.txt log family
+		/// (BotPlayer_N.txt, _Status.txt, _Research.txt, _Buildings.txt,
+		/// _BuildEvents.txt, _Timeline.csv). MissionSDK.log and DotNetLog.txt
+		/// are NOT affected by this flag - they're always written.
+		///
+		/// Set to false for shipped missions to keep the install dir clean.
+		/// Set to true during AI development to get the full per-bot trace.
+		/// </summary>
+		// Default: false for shipped missions (clean install dir, no per-bot diagnostic
+		// log spam). Flip to true locally during AI development to get the full trace.
+		public const bool enableBotPlayerLogs = false;
+
 		public CustomLogic(MissionRoot root, SaveData saveData, TriggerManager triggerManager) : base(root, saveData, triggerManager)
 		{
+			// Apply the per-bot log toggle BEFORE any bot is constructed so the
+			// first Get(...) call lands on the correct Enabled value. The flag
+			// is static on BotLog because telemetry sites (BotTelemetry, the
+			// File.WriteAllText status/research writers) need to read it too.
+			BotLog.Enabled = enableBotPlayerLogs;
+
 			// Players, units and the map have not been fully initialized at this point.
 			// In most cases, you want to add code to StartMission() instead.
 
@@ -77,6 +97,20 @@ namespace DotNetMissionSDK
 		// (2019-08-18, commit cff3f7e on TechCor8/OP2DotNetMissionSDK).
 		// The community fork (this repo) picks up at 3.0.
 		public const string SDK_VERSION = "3.0";
+
+		/// <summary>
+		/// Declares what the world looks like on tick 0 for this mission. The
+		/// SDK passes the value to every IBotPlayer constructor via
+		/// MissionContext so bots can branch on game style.
+		///
+		/// Override and return StartingMode.LastOneStanding for missions where
+		/// every player starts with a fully-built base (no starter kits).
+		/// Default is LandRush (kit-loaded convecs, build a base from scratch).
+		/// </summary>
+		protected override DotNetMissionSDK.AI.StartingMode GetStartingMode()
+		{
+			return DotNetMissionSDK.AI.StartingMode.LandRush;
+		}
 
 		protected override void StartMission()
 		{

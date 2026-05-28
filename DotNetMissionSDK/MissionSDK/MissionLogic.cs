@@ -30,6 +30,16 @@ namespace DotNetMissionSDK
 		private bool m_DeferredResourcesApplied;
 		private Dictionary<int, PlayerData.ResourceData> m_DeferredResourcesByPlayerID = new Dictionary<int, PlayerData.ResourceData>();
 
+		// What the world looks like on tick 0. Override in CustomLogic for
+		// missions that start with a fully-built base instead of starter kits.
+		// Default is LandRush because that's what every mission in this repo
+		// currently does. The value is read once during StartMission and passed
+		// to every bot via MissionContext.
+		protected virtual StartingMode GetStartingMode()
+		{
+			return StartingMode.LandRush;
+		}
+
 		
 		/// <summary>
 		/// Prepares mission logic for use.
@@ -554,6 +564,18 @@ namespace DotNetMissionSDK
 			m_DeferredResourcesApplied = false;
 			m_DeferredResourcesByPlayerID.Clear();
 
+			// Build the mission-wide context bots use to branch on what kind of
+			// game they're playing. StartingMode is declared in C# (via the
+			// CustomLogic.GetStartingMode override), not in the .opm - the .opm
+			// is data only. Everything else comes from LevelDetails.
+			MissionContext missionContext = new MissionContext(
+				GetStartingMode(),
+				m_Root?.LevelDetails?.MissionType ?? "Colony",
+				m_Root?.LevelDetails?.NumPlayers ?? 0,
+				m_Root?.LevelDetails?.MaxTechLevel ?? 0);
+
+			MissionSdkLog.Write("MissionContext: " + missionContext.ToString());
+
 			int activePlayerCount = TethysGame.PlayerCount();
 			for (int i=0; i < missionVariant.Players.Count && i < activePlayerCount; ++i)
 			{
@@ -575,20 +597,20 @@ namespace DotNetMissionSDK
 				switch (aiImpl)
 				{
 					case "TechCor":
-						m_BotPlayer[i] = new BotPlayer(pData.GetBotType(), i);
+						m_BotPlayer[i] = new BotPlayer(pData.GetBotType(), i, missionContext);
 						break;
 					case "AIv2":
-						m_BotPlayer[i] = new AIv2.BotPlayer((AIv2.BotType)(int)pData.GetBotType(), i);
+						m_BotPlayer[i] = new AIv2.BotPlayer((AIv2.BotType)(int)pData.GetBotType(), i, missionContext);
 						break;
 					case "AI_Blank":
-						m_BotPlayer[i] = new AI_Blank.BotPlayer(pData.GetBotType(), i);
+						m_BotPlayer[i] = new AI_Blank.BotPlayer(pData.GetBotType(), i, missionContext);
 						break;
 					case "AI_Test":
-						m_BotPlayer[i] = new AI_Test.BotPlayer(pData.GetBotType(), i);
+						m_BotPlayer[i] = new AI_Test.BotPlayer(pData.GetBotType(), i, missionContext);
 						break;
 					default:
 						Console.WriteLine("Unknown AIImpl '" + aiImpl + "' for player " + i + " - falling back to TechCor");
-						m_BotPlayer[i] = new BotPlayer(pData.GetBotType(), i);
+						m_BotPlayer[i] = new BotPlayer(pData.GetBotType(), i, missionContext);
 						break;
 				}
 
@@ -651,9 +673,31 @@ namespace DotNetMissionSDK
 				}
 			}
 
-			// Update bots
-			for (int i=0; i < m_BotPlayer.Length; ++i)
-				m_BotPlayer[i]?.Update(stateSnapshot);
+			// Update bots. Wrap each bot's Update individually so one bot
+			// crashing doesn't kill the others or stop the whole mission.
+			// Exception is logged to that bot's own BotPlayer_<N>.txt with full
+			// stack trace AND broadcast to MissionSDK.log for cross-bot
+			// visibility. The bot keeps getting Update calls on subsequent
+			// ticks - if it crashes every tick we'll see a log spam, which is
+			// itself a signal worth catching.
+			for (int i = 0; i < m_BotPlayer.Length; ++i)
+			{
+				IBotPlayer bot = m_BotPlayer[i];
+				if (bot == null) continue;
+				try
+				{
+					bot.Update(stateSnapshot);
+				}
+				catch (Exception botEx)
+				{
+					string msg = "BOT CRASHED in Update: " + botEx.GetType().Name + ": " + botEx.Message;
+					try { BotLog.Get(i).Write(stateSnapshot.time, msg); } catch { }
+					try { BotLog.Get(i).Write(stateSnapshot.time, "  Stack: " + botEx.StackTrace); } catch { }
+					try { MissionSdkLog.Write("Bot " + i + " (" + bot.GetType().FullName + ") " + msg); } catch { }
+					Console.WriteLine("Bot " + i + " " + msg);
+					Console.WriteLine(botEx.ToString());
+				}
+			}
 
 			// Deferred population re-apply: at POPULATION_REAPPLY_TICK, write the
 			// .opm Kids/Workers/Scientists back over whatever defaults OP2 applied

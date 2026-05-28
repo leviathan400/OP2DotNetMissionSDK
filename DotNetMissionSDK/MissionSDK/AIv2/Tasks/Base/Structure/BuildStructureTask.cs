@@ -40,7 +40,7 @@ namespace DotNetMissionSDK.AIv2.Tasks.Base.Structure
 		private bool m_OverrideLocation = false;
 		private LOCATION m_TargetLocation;
 
-		// Dedupe state-message log spam ("no convec", "convec busy", "no valid tile") â€”
+		// Dedupe state-message log spam ("no convec", "convec busy", "no valid tile") -
 		// these are repeated every cycle until the underlying condition changes. Events like
 		// "issuing DoBuild" are NOT deduped because they're real actions, not states.
 		private string m_LastLoggedStateMessage;
@@ -122,7 +122,7 @@ namespace DotNetMissionSDK.AIv2.Tasks.Base.Structure
 
 			// Throttle: silently skip if this convec just got a DoBuild from any BuildStructureTask
 			// instance. A convec can only execute one command at a time, so per-convec throttle is
-			// sufficient and prevents the multi-goal pile-on. Silent skip â€” no log entry â€” because
+			// sufficient and prevents the multi-goal pile-on. Silent skip - no log entry - because
 			// the throttle would otherwise produce its own line-storm.
 			lock (s_BuildThrottleLock)
 			{
@@ -169,7 +169,7 @@ namespace DotNetMissionSDK.AIv2.Tasks.Base.Structure
 				s_LastBuildIssuedTickByConvec[convec.unitID] = stateSnapshot.time;
 			}
 
-			// Build structure â€” this is an EVENT (not a state), so always log.
+			// Build structure - this is an EVENT (not a state), so always log.
 			// Also clear the state-message dedup since we transitioned out of a stuck state.
 			m_LastLoggedStateMessage = null;
 			log.Write(stateSnapshot.time, "BuildStructureTask(" + m_KitToBuild + "): issuing DoBuild at (" + foundPt.x + "," + foundPt.y + ") convec=" + convec.unitID);
