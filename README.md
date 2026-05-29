@@ -9,6 +9,10 @@ Community-maintained fork (this repo) keeps the SDK buildable and adds diagnosti
 
 Forum thread: [OP2 Scenario Project](https://forum.outpost2.net/index.php/topic,6245.0.html).
 
+**Latest release**: [v3.0.0 — AI Demo Missions](https://github.com/leviathan400/OP2DotNetMissionSDK/releases/tag/v3.0.0) (2026-05-28). Drop-in bundle of three AI-vs-AI Colony missions for OPU 1.4.1. See [CHANGES.md](CHANGES.md) for the v3.0.0 entry.
+
+**Writing your own mission?** Start with [`MISSION_AUTHORING.md`](MISSION_AUTHORING.md) — a step-by-step walk-through from cloning the SDK to running a custom mission in OPU, using Visual Studio and OP2MissionEditor.
+
 ---
 
 ## About

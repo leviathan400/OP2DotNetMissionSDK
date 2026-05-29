@@ -1,4 +1,4 @@
-# Changes — Sessions 2026-05-26 / 2026-05-27
+# Changes — Sessions 2026-05-26 / 2026-05-27 / 2026-05-28
 
 Brought OP2DotNetMissionSDK from "won't load" to "human vs AI on `on6_01.map`, with full diagnostic logs". This document records every change, why it was needed, and what it unblocks.
 
@@ -306,3 +306,73 @@ Added a mission-wide context object that every `IBotPlayer` receives at construc
 - `MissionLogic.StartMission` builds the context once and passes it to every bot via the factory dispatch.
 - Bot construct log line now includes `startingMode=LandRush` or `startingMode=LastOneStanding` so you can see at a glance what each bot was told. Mission init writes the full context to `MissionSDK.log`.
 - **No AI-side branching yet** - every bot stores the context as dead-storage. When we ship a LastOneStanding mission and want bots to skip the deploy-convecs phase, that's where the branching gets added (each bot reads `this.context.startingMode`).
+
+## v3.0.0 release - 2026-05-28
+
+Tagged [`v3.0.0`](https://github.com/leviathan400/OP2DotNetMissionSDK/releases/tag/v3.0.0) on GitHub. Shipped `OP2DotNetMissionSDK-3.0-AI-Demo.zip` (401 KB) — three AI-vs-AI Colony missions bundled with the shared SDK runtime, designed to drop into `D:\Outpost 2\OPU\` and run via `OPULauncher.exe`.
+
+### Native plugin
+- **`NoResponseToTrigger` CFG-fold bug** — under VS 2022's `v143` toolset with `/OPT:ICF` (Identical COMDAT Folding), the empty `NoResponseToTrigger()` export was merged with the CFG `__fastcall` stub `@_guard_check_icall_nop@4`. OP2 calls trigger callbacks as `__cdecl void()`, so any trigger that used the default no-op callback crashed the game ~10s into the mission with zero log output. Diagnosed via `dumpbin /EXPORTS`: `NoResponseToTrigger = @_guard_check_icall_nop@4` instead of `_NoResponseToTrigger`. Fix in `NativeMissionSDK/NativePlugin/LevelMain.cpp`: added a `static volatile int s_NoResponseSink = 0; s_NoResponseSink++;` so the function can't be folded with anything else. Confirmed export now points to `_NoResponseToTrigger`.
+
+### AIv2 offense
+- **Attack waves** (`AIv2/BotPlayer.cs`) — once the bot's military count crosses `ATTACK_WAVE_THRESHOLD = 10`, every `ATTACK_WAVE_COOLDOWN_TICKS = 500` (5 Marks) it dispatches `ATTACK_WAVE_PERCENT = 60` of its force toward the nearest enemy CC via `DoAttack(Unit)`. `ReinforceActiveAttacks` re-issues `DoAttack` each tick so launched attackers don't drift back into defensive postures. `EvaluateWaveCheckFollowups` logs how many waved units are alive 500 ticks after launch, how far they moved, what `ActionType` they're in — turned out essential for diagnosing why the first attempts looked like the units weren't engaging.
+- **`activeAttackers` exclusion** (`AIv2/Managers/CombatManager.cs`) — `PopulateCombatGroups` now skips units in `botPlayer.activeAttackers`. Without this, `CombatManager` re-assigned just-launched attackers into defensive vehicle groups on the very next tick, which issued `DoMove` and clobbered the `DoAttack`. This was the bug that made early wave tests look like "attacks aren't happening" — they were happening, then immediately being cancelled.
+- **`BotType` weight overrides filled** (`AIv2/Managers/BaseManager.cs`) — the TODO switch is no longer empty. LaunchStarship gets `MaintainArmyGoal=1.15`, `MaintainDefenseGoal=0.8`. Aggressive/Wreckless push army higher. Defender flips to defense-priority. EconomicGrowth and PopulationGrowth weight mining/population over military. Each personality now plays visibly differently.
+- **Three multi-Mark test runs** validated end-to-end. Plymouth (AIv2 LaunchStarship) won 2 of 3 vs TechCor on `on6_01`; the loss was an unlucky RNG seed where TechCor reached attack threshold first. Big variance run-to-run because OP2 auto-seeds from system time when no `TethysGame.SetSeed()` is called — to A/B test AI changes reliably, future sessions should add deterministic seeding to `CustomLogic.StartMission`.
+
+### Runtime quality-of-life
+- **`BotLog.Enabled` master switch** (`MissionSDK/AI/BotLog.cs`) for the `BotPlayer_<N>_*.txt` log family (the per-bot trace, Status, Research, Buildings, BuildEvents, Timeline). `MissionSDK.log` and `DotNetLog.txt` are unaffected — they're always written. Default is `false` for shipped builds; `CustomLogic` constructor sets it via the `enableBotPlayerLogs` const. `WriteStatus`, `WriteResearchStatus`, and `BotTelemetry.WriteAll` now early-out on the flag.
+- **Per-bot crash isolation** (`MissionLogic.Update`) — each bot's `Update` is wrapped in try/catch. A bot that throws gets its exception + stack written to its own `BotPlayer_<N>.txt` and `MissionSDK.log`, then the iteration continues with the next bot. One crashed bot no longer kills the whole mission.
+- **`Runtime` field on Status writer** — the status header line `# Updated <stamp> | tick=N` gained `(Mark N)` and a `# Current Runtime: Xm Ys` line. Status writers in both `AI/BotPlayer.cs` and `AIv2/BotPlayer.cs` capture `DateTime.Now` at construction and compute elapsed.
+- **AIv2 source mojibake purged** — em-dashes that had been roundtripped through a UTF-8 / Win-1252 encoding round (showing up as `â€"` in source) were normalised back to plain hyphens across `AIv2/BotPlayer.cs`, `AIv2/Managers/BaseManager.cs`, `AIv2/Tasks/Base/Structure/BuildStructureTask.cs`.
+
+### `.opm` schema migration
+- **OP2MissionEditor compatibility** — the `cTest.opm` template (and the three demo `.opm` files derived from it) were in an intermediate schema generation that the current editor couldn't open (`NullReferenceException`). Missing fields added: top-level `SDKVersion: "0"`, `MissionVariants: []`, `Regions: []`; `MasterVariant.Name` and `TethysDifficulties: []`; per-Player `DifficultyResources: []`; per-Resources `WallTubes: []` and `Triggers: []`; per-Unit AutoLayout metadata (`ID`, `BarVariant`, `BarYield`, `IgnoreLayout`, `MinDistance`, `SpawnDistance`, `MaxTubes`, `CreateWall`). Legacy top-level `Triggers2` removed — the SDK reads `Triggers`; `Triggers2` was an unused carryover.
+- **Runtime untouched** — `DotNetMissionReader.MissionRoot / MissionVariant / PlayerData.ResourceData / UnitData` all have `OnDeserializing` defaults that already supplied equivalent values for the missing fields. The schema fix is purely an editor-side issue.
+- **K&R 2-space JSON pretty-printer** — PowerShell 5.1's `ConvertTo-Json` produces value-column-aligned output that's unreadable at 80 KB. A custom emitter in `fix-opm-schema.ps1` produces standard `JSON.stringify(obj, null, 2)`-equivalent formatting. `PSCustomObject` property order is preserved. Files shrank ~72% (80 KB → 22 KB for `cSDKPieChart.opm`) just from killing the wide indent.
+- **Three duplicate beacons removed** — `cTest.opm` had Common mining beacons at `(23,33)`, `(24,33)`, `(25,33)` (a 3-wide stack near player 0). Kept `(23,33)`, dropped the other two.
+
+### `cSDK3` demo bundle
+Three AI-vs-AI Colony missions, each its own `.dll` + `.opm` pair. All use `BotType: LaunchStarship`. Starting positions and beacons reuse the `on6_01`-tuned layout from `cTest.opm` — fine for the Pie Chart mission, accepted limitation on Flood Plain and Unsettled Earth (AIs may path around terrain that wasn't designed for those coords).
+
+| File              | Map         | AI lineup                       |
+|-------------------|-------------|---------------------------------|
+| `cSDKPieChart`    | `on6_01.map`| TechCor vs AIv2                 |
+| `cSDKFloodPlain`  | `on4_02.map`| TechCor vs AIv2 vs TechCor      |
+| `cUnsettledEarth` | `mpdemo.map`| TechCor vs AI_Test vs AIv2      |
+
+Bundle layout (the zip's archive root):
+```
+OPU/
+├── DotNetInterop.dll              (shared SDK)
+├── DotNetMissionSDK_v0.dll        (shared SDK, FileVersion 3.0.0.0, Copyright "Outpost Universe")
+├── logs/                          (empty, SDK writes MissionSDK.log + DotNetLog.txt here)
+└── maps/cSDK3/
+    ├── README.md
+    ├── cSDKPieChart.dll + .opm
+    ├── cSDKFloodPlain.dll + .opm
+    └── cUnsettledEarth.dll + .opm
+```
+
+### Build/regen scripts (gitignored, repo root)
+- `fix-opm-schema.ps1` — normalises any `.opm` to the editor-compatible schema (idempotent). Custom K&R 2-space JSON emitter built in.
+- `generate-sdk3-opms.ps1` — generates the three `cSDK3/*.opm` files from `cTest.opm`. Per-mission `PlayerCfgs` lets each `.opm` specify its own player positions independently. Auto-calls `fix-opm-schema.ps1` on every output.
+- `build-sdk3-missions.ps1` — builds three native `.dll`s with different `ExportLevelDetailsEx` metadata by templating `LevelMain.cpp`. Restores the original `LevelMain.cpp` on completion (or on error via `finally`).
+- `deploy-136.ps1` / `deploy-141.ps1` — copy build outputs into the slim 1.3.6 dev install / the 1.4.1 OPU install.
+- `run-and-watch.ps1` — automated test runner. Known issue: `Select-String` polling on the growing `MissionSDK.log` hangs after ~30 min wall-clock; OP2 stays alive past the timeout and needs a manual `Stop-Process`. Worth fixing before the next long test.
+
+### C# DLL versioning
+`DotNetMissionSDK_v0.dll` Explorer Properties → Details now reads:
+- File Version: `3.0.0.0`
+- Product Version: `3.0.0.0` (clean — `IncludeSourceRevisionInInformationalVersion=false` in the csproj suppresses Microsoft.NET.Sdk's auto-appended `+<gitHash>` suffix)
+- Copyright: `Outpost Universe`
+
+### `.gitignore` additions
+- `*.ps1` — local deploy/test/build scripts live in repo root for convenience but aren't part of the SDK build
+- `DEPLOY-LAYOUTS.md` — local layout notes
+- `NativeMissionSDK/DotNetInterop/Outpost2/` — stray post-build copy folder created by the native build
+
+### v3.0.0 in numbers
+- 22 files changed, +1483/-659 lines in the source commit (`03dd5df`)
+- Bundle: 401 KB zipped, 1.2 MB unpacked, 11 files
+- Confirmed end-to-end on a second machine: SDK loads, `MissionSDK.log` and `DotNetLog.txt` write, bots construct, in-game Communications panel reads "DotNetMissionSDK 3.0"

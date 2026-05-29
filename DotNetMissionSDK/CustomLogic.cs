@@ -71,11 +71,14 @@ namespace DotNetMissionSDK
 			if (!base.InitializeNewMission())
 				return false;
 
-			// *** Add custom "New Mission" code here ***
-			
-			// Test code
+			// Dev test trigger - fires "Check me out!" once the local player
+			// owns 4+ vehicles. Validates the trigger pipeline end-to-end during
+			// SDK development. Mission-specific victory/defeat triggers live in
+			// each mission's .opm Triggers array (see cPvAIPieChart.opm for an
+			// example), not in C# - the .opm pipeline registers the trigger
+			// metadata the SDK needs for proper dispatch.
 			AddTrigger(TriggerStub.CreateVehicleCountTrigger(999, true, true, TethysGame.LocalPlayer(), 4, CompareMode.GreaterEqual));
-			
+
 			return true;
 		}
 
