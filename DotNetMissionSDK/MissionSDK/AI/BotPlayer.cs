@@ -116,20 +116,18 @@ namespace DotNetMissionSDK.AI
 			if (!BotLog.Enabled)
 				return;
 
-			try
-			{
-				if (playerID < 0 || playerID >= stateSnapshot.players.Count)
-					return;
+			// Shared formatter - identical output between bot + human status files.
+			string path = Path.Combine("logs", "BotPlayer_" + playerID + "_Status.txt");
+			PlayerStatusReport.Write(playerID, botType.ToString(), stateSnapshot,
+				DateTime.Now - m_ConstructionWallTime, path);
+		}
 
-				PlayerState p = stateSnapshot.players[playerID];
-				if (p == null)
-					return;
-
-				StringBuilder sb = new StringBuilder(4096);
-				string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-
-				TimeSpan runtime = DateTime.Now - m_ConstructionWallTime;
-				string runtimeStr = ((int)runtime.TotalMinutes).ToString() + "m " + runtime.Seconds.ToString("D2") + "s";
+		// === Former inline WriteStatus body retained below in dead-comment form ===
+		// The formatter has moved to PlayerStatusReport.Write so the human-player
+		// Player_<N>_Status.txt and the bot Status txt are byte-identical. Keeping
+		// the old text here as a paper trail; safe to delete entirely after one
+		// shipping cycle.
+		/*
 				sb.AppendLine("# BotPlayer " + playerID + " Status - " + botType + (p.isEden ? " (Eden)" : " (Plymouth)"));
 				sb.AppendLine("# Updated " + stamp + " | tick=" + stateSnapshot.time + " (Mark " + (stateSnapshot.time / 100) + ")");
 				sb.AppendLine("# Current Runtime: " + runtimeStr);
@@ -254,12 +252,8 @@ namespace DotNetMissionSDK.AI
 
 				string path = Path.Combine("logs", "BotPlayer_" + playerID + "_Status.txt");
 				File.WriteAllText(path, sb.ToString());
-			}
-			catch
-			{
-				// Status writing failure must never crash the bot.
-			}
-		}
+		*/
+		// === End former inline WriteStatus body ===
 
 		// Writes completed research + lab availability to logs/BotPlayer_<N>_Research.txt.
 		// Overwrites each call. Swallows IO exceptions.

@@ -25,7 +25,8 @@ namespace DotNetMissionReader
 		TimeRange,
 		Point,
 		Rect,
-		SpecialTarget
+		SpecialTarget,
+		Set
 	}
 
 	[DataContract]
@@ -64,6 +65,12 @@ namespace DotNetMissionReader
 		[DataMember(Name = "CargoType")]			public string CargoType				{ get; set; } = string.Empty;
 
 		[DataMember(Name = "CargoAmount")]			public int cargoAmount				{ get; set; }
+
+		// Set trigger: IDs of child triggers (1..7). neededTriggers is the
+		// minimum number of children that must fire for the Set to fire;
+		// defaults to ChildTriggerIDs.Length (all required).
+		[DataMember(Name = "ChildTriggerIDs")]		public int[] ChildTriggerIDs		{ get; set; } = System.Array.Empty<int>();
+		[DataMember(Name = "NeededTriggers")]		public int NeededTriggers			{ get; set; }
 
 
 		private T GetEnum<T>(string val) where T : struct

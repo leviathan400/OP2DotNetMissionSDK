@@ -70,6 +70,27 @@ namespace DotNetMissionSDK.Triggers
 		}
 
 		/// <summary>
+		/// Looks up a previously-added trigger by its mission-author-assigned ID
+		/// (the <c>"ID"</c> field in the .opm <c>Triggers</c> array, or the
+		/// <c>triggerID</c> arg passed to <c>TriggerStub.CreateXxxTrigger</c>).
+		/// Returns null if no such trigger is registered. Use this when you
+		/// need to <see cref="TriggerStub.Enable"/> or <see cref="TriggerStub.Disable"/>
+		/// a trigger at runtime - common pattern for the LR "wait until all
+		/// players have built a CC, then arm the OnePlayerLeft" gate.
+		/// </summary>
+		public TriggerStub GetTrigger(int triggerID)
+		{
+			ThreadAssert.MainThreadRequired();
+
+			for (int i = 0; i < m_Triggers.Count; ++i)
+			{
+				if (m_Triggers[i].id == triggerID)
+					return m_Triggers[i];
+			}
+			return null;
+		}
+
+		/// <summary>
 		/// Checks if triggers have fired, executes them if they did, then releases them if necessary.
 		/// </summary>
 		public void Update()

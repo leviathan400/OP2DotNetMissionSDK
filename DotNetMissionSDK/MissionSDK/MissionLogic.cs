@@ -194,16 +194,20 @@ namespace DotNetMissionSDK
 				if ((TethysGame.UsesMorale() || !isMultiplayer) && resourceData.FreeMorale)
 					TethysGame.FreeMoraleLevel(data.Id);
 
-				// Only set player colony type and color if playing single player
-				if (!data.IsHuman || !isMultiplayer)
-				{
-					if (data.IsEden)
-						player.GoEden();
-					else
-						player.GoPlymouth();
+				// Always honour the .opm's IsEden/Color for SDK-built missions.
+				// The previous guard ("single-player only") existed for legacy
+				// stock-multiplayer compatibility where the launcher's slot UI
+				// owned colony assignment. For SDK missions the .opm is the
+				// authoritative source: PvAI / MLOS / LandRush missions all
+				// want their human seat to land on the colony the mission
+				// author declared (otherwise OP2 defaults humans in multiplayer
+				// to Plymouth and the mission's framing breaks).
+				if (data.IsEden)
+					player.GoEden();
+				else
+					player.GoPlymouth();
 
-					player.SetColorNumber(data.GetColor());
-				}
+				player.SetColorNumber(data.GetColor());
 
 				if (data.IsHuman)
 					player.GoHuman();
@@ -419,6 +423,40 @@ namespace DotNetMissionSDK
 
 						case TriggerType.SpecialTarget:
 							Console.WriteLine("SpecialTarget not implemented!");
+							break;
+
+						case TriggerType.Set:
+							// Need all child triggers resolved first - if any of them
+							// haven't been created yet (forward reference), defer this
+							// trigger to a later pass.
+							{
+								int[] childIds = data.ChildTriggerIDs ?? System.Array.Empty<int>();
+								if (childIds.Length < 1 || childIds.Length > 7)
+								{
+									Console.WriteLine("Set trigger ID " + data.Id + ": ChildTriggerIDs must contain 1..7 entries (got " + childIds.Length + ")");
+									wasProcessed = false;
+									break;
+								}
+
+								TriggerStub[] children = new TriggerStub[childIds.Length];
+								bool allResolved = true;
+								for (int ci = 0; ci < childIds.Length; ++ci)
+								{
+									if (!triggerLookup.TryGetValue(childIds[ci], out children[ci]))
+									{
+										allResolved = false;
+										break;
+									}
+								}
+								if (!allResolved)
+								{
+									wasProcessed = false;
+									break;
+								}
+
+								int needed = data.NeededTriggers > 0 ? data.NeededTriggers : childIds.Length;
+								trigger = TriggerStub.CreateSetTrigger(data.Id, data.Enabled, data.OneShot, needed, children);
+							}
 							break;
 
 						default:
@@ -779,6 +817,20 @@ namespace DotNetMissionSDK
 		protected bool AddTrigger(TriggerStub triggerStub)
 		{
 			return m_TriggerManager.AddTrigger(triggerStub);
+		}
+
+		/// <summary>
+		/// Looks up a registered trigger by its mission-author-assigned ID
+		/// (the <c>"ID"</c> field from the .opm Triggers array). Returns null
+		/// if no such trigger exists. Use to <see cref="TriggerStub.Enable"/>
+		/// or <see cref="TriggerStub.Disable"/> a trigger at runtime - the
+		/// classic LR arming pattern fires a Set trigger when all players
+		/// have built a CC, and the Set's <c>OnTriggerExecuted</c> handler
+		/// enables the disabled OnePlayerLeft / NoCommandCenter triggers.
+		/// </summary>
+		protected TriggerStub GetTrigger(int triggerID)
+		{
+			return m_TriggerManager.GetTrigger(triggerID);
 		}
 
 		/// <summary>

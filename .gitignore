@@ -340,3 +340,6 @@ DEPLOY-LAYOUTS.md
 # Stray native build post-step output (DotNetInterop's PostBuildEvent
 # copies the .dll into this folder; not tracked).
 NativeMissionSDK/DotNetInterop/Outpost2/
+
+# Docs folder
+docs/*.md

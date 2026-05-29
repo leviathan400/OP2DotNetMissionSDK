@@ -172,8 +172,23 @@ extern "C"
 	}
 
 	// Set Trigger  [Note: Used to collect a number of other triggers into a single trigger output. Can be used for something like any 3 in a set of 5 objectives.]
-	/*extern EXPORT Trigger* __stdcall Trigger_CreateSetTrigger(int bEnabled, int bOneShot, int totalTriggers, int neededTriggers, const char* triggerFunction)
+	//
+	// OP2's CreateSetTrigger is variadic - the child triggers are pushed
+	// onto the stack as the trailing varargs. Each `Trigger` is just a 4-byte
+	// ScStub (one int stubIndex), so passing N Trigger objects by value is
+	// equivalent to pushing N ints. We support up to 7 child triggers
+	// (matches the OP2 player-count cap). The C# wrapper packs unused slots
+	// with -1; OP2 only reads the first `totalTriggers` vararg slots.
+	extern EXPORT int __stdcall Trigger_CreateSetTrigger(int bEnabled, int bOneShot, int totalTriggers, int neededTriggers, int idx0, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6)
 	{
-		return new Trigger(CreateSetTrigger(bEnabled, bOneShot, totalTriggers, neededTriggers, triggerFunction));
-	}*/
+		Trigger t0; t0.stubIndex = idx0;
+		Trigger t1; t1.stubIndex = idx1;
+		Trigger t2; t2.stubIndex = idx2;
+		Trigger t3; t3.stubIndex = idx3;
+		Trigger t4; t4.stubIndex = idx4;
+		Trigger t5; t5.stubIndex = idx5;
+		Trigger t6; t6.stubIndex = idx6;
+		return CreateSetTrigger(bEnabled, bOneShot, totalTriggers, neededTriggers,
+		                        "NoResponseToTrigger", t0, t1, t2, t3, t4, t5, t6).stubIndex;
+	}
 }

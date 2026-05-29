@@ -304,14 +304,34 @@ namespace DotNetMissionSDK.Triggers
 		}
 
 		// Set Trigger  [Note: Used to collect a number of other triggers into a single trigger output. Can be used for something like any 3 in a set of 5 objectives.]
-		/*public static Trigger CreateSetTrigger(bool enabled, bool oneShot, int totalTriggers, int neededTriggers, string triggerFunction, Trigger[] triggers)
+		//
+		// `neededTriggers` of `childTriggers.Length` must fire for the Set
+		// to fire. For an LR "wait until all N players have built a CC"
+		// arming pattern: neededTriggers == childTriggers.Length == N.
+		// Caps at 7 child triggers (OP2's max player count).
+		public static TriggerStub CreateSetTrigger(int triggerID, bool enabled, bool oneShot, int neededTriggers, TriggerStub[] childTriggers)
 		{
-			IntPtr[] pointers = new IntPtr[triggers.Length];
-			for (int i=0; i < pointers.Length; ++i)
-				pointers[i] = triggers[i].GetHandle();
+			ThreadAssert.MainThreadRequired();
 
-			return new Trigger(Trigger_CreateSetTrigger(enabled ? 1 : 0, oneShot ? 1 : 0, totalTriggers, neededTriggers, triggerFunction, pointers));
-		}*/
+			if (childTriggers == null)
+				throw new System.ArgumentNullException(nameof(childTriggers));
+			if (childTriggers.Length < 1 || childTriggers.Length > 7)
+				throw new System.ArgumentException("CreateSetTrigger supports 1..7 child triggers (OP2 player-count cap)", nameof(childTriggers));
+			if (neededTriggers < 1 || neededTriggers > childTriggers.Length)
+				throw new System.ArgumentOutOfRangeException(nameof(neededTriggers));
+
+			// Pack child stub indices into the fixed 7-slot ABI. Unused slots
+			// get -1 - OP2 reads only the first `totalTriggers` slots.
+			int[] s = { -1, -1, -1, -1, -1, -1, -1 };
+			for (int i = 0; i < childTriggers.Length; ++i)
+				s[i] = childTriggers[i].m_StubData.stubIndex;
+
+			int totalTriggers = childTriggers.Length;
+			int index = Trigger_CreateSetTrigger(enabled ? 1 : 0, oneShot ? 1 : 0,
+				totalTriggers, neededTriggers,
+				s[0], s[1], s[2], s[3], s[4], s[5], s[6]);
+			return new TriggerStub(index, triggerID, enabled, oneShot, -1);
+		}
 
 		// Victory/Failure condition triggers
 		[DllImport("DotNetInterop.dll")] private static extern int Trigger_CreateVictoryCondition(int bEnabled, int bOneShot /*not used, set to 0*/, int victoryTrigger, string missionObjective);
@@ -336,7 +356,10 @@ namespace DotNetMissionSDK.Triggers
 		[DllImport("DotNetInterop.dll")] private static extern int Trigger_CreateDamagedTrigger(int bEnabled, int bOneShot, int groupIndex, int damage);
 		// Time Triggers
 		[DllImport("DotNetInterop.dll")] private static extern int Trigger_CreateTimeTrigger(int bEnabled, int bOneShot, int timeMin, int timeMax);
-		[DllImport("DotNetInterop.dll")] private static extern int Trigger_CreateTimeTrigger(int bEnabled, int bOneShot, int time);
+		// The single-time overload is exported as Trigger_CreateTimeTrigger2 to
+		// disambiguate from the (timeMin, timeMax) version that shares the
+		// same C# method name. P/Invoke binds to the export name not the C# name.
+		[DllImport("DotNetInterop.dll", EntryPoint = "Trigger_CreateTimeTrigger2")] private static extern int Trigger_CreateTimeTrigger(int bEnabled, int bOneShot, int time);
 		// Positional Triggers
 		[DllImport("DotNetInterop.dll")] private static extern int Trigger_CreatePointTrigger(int bEnabled, int bOneShot, int playerNum, int x, int y);
 		[DllImport("DotNetInterop.dll")] private static extern int Trigger_CreateRectTrigger(int bEnabled, int bOneShot, int playerNum, int x, int y, int width, int height);
@@ -345,6 +368,7 @@ namespace DotNetMissionSDK.Triggers
 		[DllImport("DotNetInterop.dll")] private static extern void Trigger_GetSpecialTargetData(int specialTargetTrigger, int sourceUnit /* Scout */);
 
 		// Set Trigger  [Note: Used to collect a number of other triggers into a single trigger output. Can be used for something like any 3 in a set of 5 objectives.]
-		//[DllImport("DotNetInterop.dll")] private static extern IntPtr Trigger_CreateSetTrigger(int bEnabled, int bOneShot, int totalTriggers, int neededTriggers, string triggerFunction, IntPtr[] triggers); // +list of triggers
+		// Fixed 7-arg ABI - native side packs into Trigger vararg slots. Unused slots get -1.
+		[DllImport("DotNetInterop.dll")] private static extern int Trigger_CreateSetTrigger(int bEnabled, int bOneShot, int totalTriggers, int neededTriggers, int idx0, int idx1, int idx2, int idx3, int idx4, int idx5, int idx6);
 	}
 }

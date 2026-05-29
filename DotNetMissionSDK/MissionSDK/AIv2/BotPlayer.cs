@@ -441,6 +441,14 @@ namespace DotNetMissionSDK.AIv2
 			if (!DotNetMissionSDK.AI.BotLog.Enabled)
 				return;
 
+			// Shared formatter - identical output between bot + human status files.
+			string path = Path.Combine("logs", "BotPlayer_" + playerID + "_Status.txt");
+			DotNetMissionSDK.AI.PlayerStatusReport.Write(playerID, botType.ToString(), stateSnapshot,
+				DateTime.Now - m_ConstructionWallTime, path);
+			return;
+
+#pragma warning disable CS0162
+			// === Former inline formatter - replaced by PlayerStatusReport.Write above. ===
 			try
 			{
 				if (playerID < 0 || playerID >= stateSnapshot.players.Count)
@@ -577,13 +585,14 @@ namespace DotNetMissionSDK.AIv2
 				sb.AppendLine("  Command Modules:    " + u.commandModuleCount);
 				sb.AppendLine("  Fueling Systems:    " + u.fuelingSystemsCount);
 
-				string path = Path.Combine("logs", "BotPlayer_" + playerID + "_Status.txt");
-				File.WriteAllText(path, sb.ToString());
+				string p2 = Path.Combine("logs", "BotPlayer_" + playerID + "_Status.txt");
+				File.WriteAllText(p2, sb.ToString());
 			}
 			catch
 			{
 				// Status writing failure must never crash the bot.
 			}
+#pragma warning restore CS0162
 		}
 
 		// Writes completed research + lab availability to logs/BotPlayer_<N>_Research.txt.
