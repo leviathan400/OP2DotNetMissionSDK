@@ -15,19 +15,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Outpost2DLL", "NativeMissio
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HFL", "NativeMissionSDK\NativeSDK\HFL\Source\HFL.vcxproj", "{0FC43A25-FB89-4258-849B-CB3C0A061E0D}"
 EndProject
-Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "Outpost2", "Outpost2exe\Outpost2.exe", "{CFC740A2-54ED-4BB8-88FA-B8B21FBEAD17}"
-	ProjectSection(DebuggerProjectSystem) = preProject
-		PortSupplier = 00000000-0000-0000-0000-000000000000
-		Executable = E:\Business\Freelance\Projects\Outpost2\Outpost2exe\Outpost2.exe
-		RemoteMachine = WINDWAKER
-		StartingDirectory = E:\Business\Freelance\Projects\Outpost2\Outpost2exe
-		Environment = Default
-		LaunchingEngine = 92ef0900-2251-11d2-b72e-0000f87572ef
-		UseLegacyDebugEngines = No
-		LaunchSQLEngine = No
-		AttachLaunchAction = No
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetMissionSDK", "DotNetMissionSDK\DotNetMissionSDK.csproj", "{1EB860B3-51BF-44F2-9C36-8F8C8EA84FCD}"
 EndProject
 Global
@@ -82,12 +69,6 @@ Global
 		{0FC43A25-FB89-4258-849B-CB3C0A061E0D}.Release|x64.ActiveCfg = Release|Win32
 		{0FC43A25-FB89-4258-849B-CB3C0A061E0D}.Release|x86.ActiveCfg = Release|Win32
 		{0FC43A25-FB89-4258-849B-CB3C0A061E0D}.Release|x86.Build.0 = Release|Win32
-		{CFC740A2-54ED-4BB8-88FA-B8B21FBEAD17}.Debug|Any CPU.ActiveCfg = Release|x86
-		{CFC740A2-54ED-4BB8-88FA-B8B21FBEAD17}.Debug|x64.ActiveCfg = Release|x86
-		{CFC740A2-54ED-4BB8-88FA-B8B21FBEAD17}.Debug|x86.ActiveCfg = Release|x86
-		{CFC740A2-54ED-4BB8-88FA-B8B21FBEAD17}.Release|Any CPU.ActiveCfg = Release|x86
-		{CFC740A2-54ED-4BB8-88FA-B8B21FBEAD17}.Release|x64.ActiveCfg = Release|x86
-		{CFC740A2-54ED-4BB8-88FA-B8B21FBEAD17}.Release|x86.ActiveCfg = Release|x86
 		{1EB860B3-51BF-44F2-9C36-8F8C8EA84FCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1EB860B3-51BF-44F2-9C36-8F8C8EA84FCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1EB860B3-51BF-44F2-9C36-8F8C8EA84FCD}.Debug|x64.ActiveCfg = Debug|Any CPU

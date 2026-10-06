@@ -168,15 +168,24 @@ namespace DotNetMissionSDK.AI.Managers
 			{
 				m_IsProcessing = false;
 
-				// Execute all completed actions
-				AsyncParams asyncParams = (AsyncParams)returnState;
+				try
+				{
+					// Null means planning threw (AsyncPump logged it). Keep the previous plan and retry next update.
+					if (returnState == null)
+						return;
 
-				asyncParams.botCommands.Execute();
+					// Execute all completed actions
+					AsyncParams asyncParams = (AsyncParams)returnState;
 
-				// Store data
-				m_StructureLaborOrder = asyncParams.structureIDLaborOrder.AsReadOnly();
-				
-				stateSnapshot.Release();
+					asyncParams.botCommands.Execute();
+
+					// Store data
+					m_StructureLaborOrder = asyncParams.structureIDLaborOrder.AsReadOnly();
+				}
+				finally
+				{
+					stateSnapshot.Release();
+				}
 
 				// DEBUG:
 				if (ownerID == TethysGame.LocalPlayer())

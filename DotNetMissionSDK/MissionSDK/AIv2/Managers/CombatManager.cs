@@ -72,29 +72,38 @@ namespace DotNetMissionSDK.AIv2.Managers
 			{
 				m_IsProcessing = false;
 
-				m_CombatGroups = (List<VehicleGroup>)returnState;
-
-				// Update debug markers
-				if (ownerID == TethysGame.LocalPlayer())
+				try
 				{
-					//foreach (Unit unit in m_DebugMarkers)
-					//	unit.DoDeath();
+					// Null means planning threw (AsyncPump logged it). Keep the previous groups and retry next update.
+					if (returnState == null)
+						return;
 
-					//m_DebugMarkers.Clear();
+					m_CombatGroups = (List<VehicleGroup>)returnState;
 
-					for (int i=0; i < m_CombatGroups.Count; ++i)
+					// Update debug markers
+					if (ownerID == TethysGame.LocalPlayer())
 					{
-						LOCATION position = m_CombatGroups[i].combatZone.bounds.position;
-						position += m_CombatGroups[i].combatZone.bounds.size / 2;
-						//m_DebugMarkers.Add(TethysGame.PlaceMarker(position.x, position.y, MarkerType.Circle));
+						//foreach (Unit unit in m_DebugMarkers)
+						//	unit.DoDeath();
+
+						//m_DebugMarkers.Clear();
+
+						for (int i=0; i < m_CombatGroups.Count; ++i)
+						{
+							LOCATION position = m_CombatGroups[i].combatZone.bounds.position;
+							position += m_CombatGroups[i].combatZone.bounds.size / 2;
+							//m_DebugMarkers.Add(TethysGame.PlaceMarker(position.x, position.y, MarkerType.Circle));
+						}
 					}
+
+					// Update vehicle groups
+					foreach (VehicleGroup group in m_CombatGroups)
+						group.Update(stateSnapshot);
 				}
-
-				// Update vehicle groups
-				foreach (VehicleGroup group in m_CombatGroups)
-					group.Update(stateSnapshot);
-
-				stateSnapshot.Release();
+				finally
+				{
+					stateSnapshot.Release();
+				}
 			});
 		}
 

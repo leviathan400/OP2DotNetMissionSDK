@@ -16,6 +16,7 @@ namespace DotNetMissionSDK.Async
 			public CompletedCallback completedCB	{ get; private set; }
 			public Task task;
 			public object returnState;
+			public Exception exception;
 
 			public AsyncOperation(int targetTime, CompletedCallback completedCB)
 			{
@@ -35,6 +36,7 @@ namespace DotNetMissionSDK.Async
 		/// <summary>
 		/// Runs the specified action asynchronously.
 		/// Executes completedCB upon completion of the action.
+		/// If the action throws, the exception is logged and completedCB receives null.
 		/// NOTE: Must be run from main thread.
 		/// </summary>
 		/// <param name="actionCB">The action to run asynchronously.</param>
@@ -52,15 +54,27 @@ namespace DotNetMissionSDK.Async
 			lock (m_SyncCompleted)
 				m_PendingOperations.Add(operation);
 			
-			// Run the operation. When it is complete, add it to the completed operations list
+			// Run the operation. When it is complete, add it to the completed operations list.
+			// The operation must reach the completed list even if the action throws, otherwise its
+			// callback never runs and the caller (e.g. a bot manager waiting on m_IsProcessing) stalls forever.
 			operation.task = Task.Run(() =>
 			{
-				operation.returnState = actionCB();
-
-				lock (m_SyncCompleted)
+				try
 				{
-					m_PendingOperations.Remove(operation);
-					m_CompletedOperations.Add(operation);
+					operation.returnState = actionCB();
+				}
+				catch (Exception ex)
+				{
+					operation.returnState = null;
+					operation.exception = ex;
+				}
+				finally
+				{
+					lock (m_SyncCompleted)
+					{
+						m_PendingOperations.Remove(operation);
+						m_CompletedOperations.Add(operation);
+					}
 				}
 			});
 		}
@@ -80,10 +94,12 @@ namespace DotNetMissionSDK.Async
 			lock (m_SyncCompleted)
 				pendingOperations = new List<AsyncOperation>(m_PendingOperations);
 
-			// Wait for all pending operations that have reached the target time
+			// Wait for all pending operations that have reached the target time.
+			// Uses <= so an operation whose exact tick was missed (e.g. an earlier exception in the
+			// tick skipped this Update) is still completed instead of being orphaned forever.
 			foreach (AsyncOperation operation in pendingOperations)
 			{
-				if (operation.targetTime == time)
+				if (operation.targetTime <= time)
 					operation.task.Wait();
 			}
 
@@ -96,7 +112,7 @@ namespace DotNetMissionSDK.Async
 				{
 					AsyncOperation operation = m_CompletedOperations[i];
 
-					if (operation.targetTime == time)
+					if (operation.targetTime <= time)
 					{
 						completedOperations.Add(operation);
 						m_CompletedOperations.RemoveAt(i--);
@@ -104,9 +120,28 @@ namespace DotNetMissionSDK.Async
 				}
 			}
 
-			// Execute the completed operation callbacks
+			// Execute the completed operation callbacks.
+			// Each callback is isolated so one failure doesn't drop the callbacks after it.
 			foreach (AsyncOperation operation in completedOperations)
-				operation.completedCB?.Invoke(operation.returnState);
+			{
+				if (operation.exception != null)
+					LogException("action", operation.exception);
+
+				try
+				{
+					operation.completedCB?.Invoke(operation.returnState);
+				}
+				catch (Exception ex)
+				{
+					LogException("completion callback", ex);
+				}
+			}
+		}
+
+		private static void LogException(string stage, Exception ex)
+		{
+			Console.WriteLine("EXCEPTION in AsyncPump " + stage + " at t=" + TethysGame.Time() + ":");
+			Console.WriteLine(ex.ToString());
 		}
 
 		/// <summary>

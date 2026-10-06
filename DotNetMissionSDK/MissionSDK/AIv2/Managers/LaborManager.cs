@@ -92,13 +92,22 @@ namespace DotNetMissionSDK.AIv2.Managers
 			{
 				m_IsProcessing = false;
 
-				// Execute all completed actions
-				List<Action> buildingActions = (List<Action>)returnState;
+				try
+				{
+					// Null means planning threw (AsyncPump logged it). Skip this cycle and retry next update.
+					if (returnState == null)
+						return;
 
-				foreach (Action action in buildingActions)
-					action();
+					// Execute all completed actions
+					List<Action> buildingActions = (List<Action>)returnState;
 
-				stateSnapshot.Release();
+					foreach (Action action in buildingActions)
+						action();
+				}
+				finally
+				{
+					stateSnapshot.Release();
+				}
 			});
 		}
 
