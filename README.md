@@ -249,3 +249,9 @@ Original work by TechCor. See the [forum thread](https://forum.outpost2.net/inde
 
 [![Video AI Demo](https://i3.ytimg.com/vi/-LvTZeNePBQ/hqdefault.jpg)](https://www.youtube.com/watch?v=-LvTZeNePBQ)
 
+
+---
+
+## License
+
+This project is licensed under the GNU General Public License v3.0. See [`LICENSE`](LICENSE) for the full text.
