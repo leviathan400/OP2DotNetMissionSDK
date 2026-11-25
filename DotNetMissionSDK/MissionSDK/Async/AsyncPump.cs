@@ -29,6 +29,9 @@ namespace DotNetMissionSDK.Async
 		private static List<AsyncOperation> m_PendingOperations = new List<AsyncOperation>();
 		private static List<AsyncOperation> m_CompletedOperations = new List<AsyncOperation>();
 
+		// Game clock. Internal so tests can drive the pump without Outpost 2 running.
+		internal static Func<int> getTime = TethysGame.Time;
+
 		public delegate object ActionCallback();
 		public delegate void CompletedCallback(object returnState);
 
@@ -49,7 +52,7 @@ namespace DotNetMissionSDK.Async
 			if (timeToAdd <= 0)
 				throw new ArgumentOutOfRangeException("timeToAdd", timeToAdd, "timeToAdd must be greater than 0.");
 
-			AsyncOperation operation = new AsyncOperation(TethysGame.Time() + timeToAdd, completedCB);
+			AsyncOperation operation = new AsyncOperation(getTime() + timeToAdd, completedCB);
 
 			lock (m_SyncCompleted)
 				m_PendingOperations.Add(operation);
@@ -87,7 +90,7 @@ namespace DotNetMissionSDK.Async
 		{
 			ThreadAssert.MainThreadRequired();
 
-			int time = TethysGame.Time();
+			int time = getTime();
 
 			List<AsyncOperation> pendingOperations;
 
@@ -140,7 +143,7 @@ namespace DotNetMissionSDK.Async
 
 		private static void LogException(string stage, Exception ex)
 		{
-			Console.WriteLine("EXCEPTION in AsyncPump " + stage + " at t=" + TethysGame.Time() + ":");
+			Console.WriteLine("EXCEPTION in AsyncPump " + stage + " at t=" + getTime() + ":");
 			Console.WriteLine(ex.ToString());
 		}
 

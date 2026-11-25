@@ -80,6 +80,16 @@ MSBuild.exe DotNetMissionSDK.sln -p:Configuration=Release -p:PlatformToolset=v14
 
 The `-p:PlatformToolset=v143` override is **required**: the bundled HFL and Outpost2DLL submodule projects target the v141 (VS 2017) toolset, which isn't installed by default on modern Visual Studio.
 
+### Running the tests
+
+The C# unit tests cover the parts of the SDK that run without Outpost 2 (AsyncPump, Pathfinder, the `.opm` reader). They need the .NET 8 SDK and run on Windows or Linux:
+
+```cmd
+dotnet test Tests/DotNetMissionSDK.Tests
+```
+
+CI runs them, plus the full Windows build, on every push to `master` and every pull request.
+
 ### Build outputs
 
 | File | Location | Role |

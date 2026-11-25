@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Unit tests for the parts of the SDK that run without Outpost 2.
+       Run with: dotnet test Tests/DotNetMissionSDK.Tests -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- SkipOutpost2Copy: don't let test builds overwrite the DLL staged in Outpost2/. -->
+    <ProjectReference Include="..\..\DotNetMissionSDK\DotNetMissionSDK.csproj" AdditionalProperties="SkipOutpost2Copy=true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Outpost2\cTest.opm" Link="Data\cTest.opm" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

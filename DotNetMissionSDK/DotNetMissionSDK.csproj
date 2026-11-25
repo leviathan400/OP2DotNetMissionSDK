@@ -22,7 +22,11 @@
     <WarningLevel>0</WarningLevel>
   </PropertyGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <ItemGroup>
+    <InternalsVisibleTo Include="DotNetMissionSDK.Tests" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(SkipOutpost2Copy)' != 'true'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)../Outpost2" />
   </Target>
 

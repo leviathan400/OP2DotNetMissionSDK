@@ -33,3 +33,16 @@ jobs:
             Release/DotNetInterop.dll
             DotNetMissionSDK/bin/Release/netstandard2.0/DotNetMissionSDK_v0.dll
             Outpost2/cTest.opm
+
+  test:
+    # C# unit tests for the parts of the SDK that run without Outpost 2.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test
+        run: dotnet test Tests/DotNetMissionSDK.Tests
