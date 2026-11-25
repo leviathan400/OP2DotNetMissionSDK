@@ -1,5 +1,7 @@
 # OP2DotNetMissionSDK
 
+[![Build](https://github.com/leviathan400/OP2DotNetMissionSDK/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/leviathan400/OP2DotNetMissionSDK/actions/workflows/build.yml)
+
 ![Screenshot](https://images.outpostuniverse.org/OP2DotNetMissionSDKAI.png)
 
 .NET Mission SDK for Outpost 2 - write Outpost 2 missions in C# or JSON.
